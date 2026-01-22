@@ -38,8 +38,7 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Build artifacts (for widget)
-widget/dist/
+# Build artifacts (exclude widget source node_modules but keep dist)
 widget/node_modules/
 
 # Docker
