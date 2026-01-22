@@ -130,6 +130,15 @@ class KiyohAPI {
    * Extract product information
    */
   getProductInfo(kiyohData, productCode) {
+    if (!kiyohData.products || kiyohData.products.length === 0) {
+      return {
+        productName: 'Unknown Product',
+        gtin: productCode,
+        imageUrl: null,
+        sourceUrl: null
+      };
+    }
+
     const product = kiyohData.products.find(p => p.productCode === productCode) || kiyohData.products[0];
 
     if (!product) {
