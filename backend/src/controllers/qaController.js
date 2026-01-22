@@ -20,13 +20,16 @@ const cacheService = new CacheService();
  */
 async function handleQuestion(req, res, next) {
   const startTime = Date.now();
-  const { locationId, productCode, question, language = 'nl' } = req.body;
+  const { locationId, productCode, productIdentifier, productContext, question, language = 'nl' } = req.body;
 
   let cached = false;
   let error = null;
 
   try {
-    logger.info(`Processing question for location ${locationId}, product ${productCode}`);
+    const pCode = productCode || (productIdentifier?.type === 'gtin' ? productIdentifier.value : null);
+    const pName = productContext?.name || (productIdentifier?.type === 'name' ? productIdentifier.value : null);
+
+    logger.info(`Processing question for location ${locationId}, product ${pCode || pName || 'unknown'}`);
 
     // Fetch customer and API token from database
     const customer = await customerService.getCustomerByLocationId(locationId);
@@ -40,9 +43,9 @@ async function handleQuestion(req, res, next) {
 
     const apiToken = customer.api_token;
 
-    // Check cache for Q&A
-    if (productCode) {
-      const cachedAnswer = await cacheService.getQA(productCode, question);
+    // Check cache for Q&A (only if we have a stable identifier like GTIN)
+    if (pCode) {
+      const cachedAnswer = await cacheService.getQA(pCode, question);
       if (cachedAnswer) {
         logger.info('Returning cached answer');
         cached = true;
@@ -50,7 +53,7 @@ async function handleQuestion(req, res, next) {
         // Log analytics
         await Analytics.log({
           locationId,
-          productCode,
+          productCode: pCode,
           question,
           answerProvided: true,
           cached: true,
@@ -75,27 +78,33 @@ async function handleQuestion(req, res, next) {
 
     // Fetch product reviews from Kiyoh
     const kiyohData = await kiyohAPI.getProductReviews(locationId, apiToken, {
-      productCode
+      productCode: pCode,
+      productName: pName
     });
 
     if (!kiyohData.reviews || kiyohData.reviews.length === 0) {
-      throw new Error('Product not found or no reviews available');
+      // If no reviews but we have product context (specs), we can still proceed
+      if (!productContext || (!productContext.specs && !productContext.description)) {
+        throw new Error('Product not found or no reviews available');
+      }
+      logger.info('No reviews found, but using product context for answer');
     }
 
     // Get product info
-    const productInfo = kiyohAPI.getProductInfo(kiyohData, productCode);
+    const productInfo = kiyohAPI.getProductInfo(kiyohData, pCode);
 
     // Build Gemini prompt
     const { systemInstruction, prompt } = buildQAPrompt(
       {
-        productName: productInfo.productName,
-        gtin: productInfo.gtin,
+        productName: pName || productInfo.productName,
+        gtin: productInfo.gtin || pCode,
         averageRating: kiyohData.averageRating,
         reviewCount: kiyohData.reviewCount
       },
-      kiyohData.reviews,
+      kiyohData.reviews || [],
       question,
-      language
+      language,
+      productContext
     );
 
     // Generate answer with Gemini
@@ -105,7 +114,7 @@ async function handleQuestion(req, res, next) {
     );
 
     // Extract relevant review snippets
-    const relevantReviews = extractRelevantReviews(kiyohData.reviews, question, 3);
+    const relevantReviews = extractRelevantReviews(kiyohData.reviews || [], question, 3);
 
     // Prepare response
     const responseData = {
@@ -113,8 +122,8 @@ async function handleQuestion(req, res, next) {
       answer,
       confidence,
       product: {
-        name: productInfo.productName,
-        gtin: productInfo.gtin,
+        name: pName || productInfo.productName,
+        gtin: productInfo.gtin || pCode,
         rating: kiyohData.averageRating,
         reviewCount: kiyohData.reviewCount,
         imageUrl: productInfo.imageUrl
@@ -128,9 +137,9 @@ async function handleQuestion(req, res, next) {
       }
     };
 
-    // Cache the answer
-    if (productCode) {
-      await cacheService.cacheQA(productCode, question, responseData);
+    // Cache the answer if we have a stable code
+    if (pCode) {
+      await cacheService.cacheQA(pCode, question, responseData);
     }
 
     // Save to database
@@ -138,24 +147,29 @@ async function handleQuestion(req, res, next) {
       .update(question.toLowerCase().trim())
       .digest('hex');
 
-    await QAPair.create({
-      locationId,
-      productCode: productInfo.gtin,
-      question,
-      questionHash,
-      answer,
-      confidence,
-      language,
-      tokensUsed
-    });
+    // Only save if we have a product code, otherwise it's hard to retrieve
+    if (pCode) {
+      await QAPair.create({
+        locationId,
+        productCode: pCode,
+        question,
+        questionHash,
+        answer,
+        confidence,
+        language,
+        tokensUsed
+      });
+    }
 
     // Increment question counter
-    await cacheService.incrementQuestionCount(locationId, productInfo.gtin, question);
+    if (pCode) {
+      await cacheService.incrementQuestionCount(locationId, pCode, question);
+    }
 
     // Log analytics
     await Analytics.log({
       locationId,
-      productCode: productInfo.gtin,
+      productCode: pCode || 'unknown',
       question,
       answerProvided: true,
       cached: false,

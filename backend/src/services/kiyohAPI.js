@@ -14,49 +14,90 @@ class KiyohAPI {
    * @param {string} apiToken - Kiyoh API token
    * @param {object} options - Additional options (productCode, clusterId, etc.)
    */
-  async getProductReviews(locationId, apiToken, options = {}) {
-    const { productCode, clusterId, clusterCode } = options;
-
-    const url = new URL(`${this.baseUrl}/v1/publication/product/review/external`);
-    url.searchParams.append('locationId', locationId);
-
-    if (productCode) url.searchParams.append('productCode', productCode);
-    if (clusterId) url.searchParams.append('clusterId', clusterId);
-    if (clusterCode) url.searchParams.append('clusterCode', clusterCode);
-
+  async getProductReviews(locationId, apiToken, { productCode, productName }) {
     try {
-      logger.info(`Fetching Kiyoh reviews for location ${locationId}, product ${productCode || 'all'}`);
+      if (productCode) {
+        // Try getting reviews by GTIN/product code first
+        try {
+          const response = await fetch(`${this.baseUrl}/v1/publication/product/review/external?locationId=${locationId}&productCode=${productCode}&include_attributes=true`, {
+            headers: {
+              'X-Publication-Api-Token': apiToken,
+              'Accept': 'application/json',
+              'User-Agent': 'Kiyoh-AI-Widget/1.0'
+            }
+          });
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'X-Publication-Api-Token': apiToken,
-          'Accept': 'application/json',
-          'User-Agent': 'Kiyoh-AI-Widget/1.0'
-        }
-      });
+          if (response.ok) {
+            const data = await response.json();
+            return this.normalizeResponse(data);
+          }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`Kiyoh API error: ${response.status} - ${errorText}`);
-
-        if (response.status === 404) {
-          throw new Error('Product not found or no reviews available');
-        } else if (response.status === 401 || response.status === 403) {
-          throw new Error('Invalid API token or unauthorized');
-        } else {
-          throw new Error(`Kiyoh API error: ${response.status}`);
+          if (!productName) throw new Error(`Kiyoh API error: ${response.status}`);
+          logger.info('GTIN lookup failed, trying fuzzy match with name:', productName);
+        } catch (error) {
+          if (!productName) throw error;
         }
       }
 
-      const data = await response.json();
-      logger.info(`Successfully fetched ${data.reviews?.length || 0} reviews`);
+      if (productName) {
+        // Fallback: Get all recent reviews and fuzzy match by name
+        const response = await fetch(`${this.baseUrl}/v1/publication/product/review/external?locationId=${locationId}&limit=100&include_attributes=true`, {
+          headers: {
+            'X-Publication-Api-Token': apiToken,
+            'Accept': 'application/json',
+            'User-Agent': 'Kiyoh-AI-Widget/1.0'
+          }
+        });
 
-      return this.normalizeResponse(data);
+        if (!response.ok) throw new Error(`Kiyoh API error: ${response.status}`);
+
+        const data = await response.json();
+        const allReviews = this.normalizeResponse(data);
+        const matchingReviews = this.fuzzyMatchProduct(allReviews.reviews, productName);
+
+        return {
+          ...allReviews,
+          reviews: matchingReviews,
+          reviewCount: matchingReviews.length,
+          averageRating: this.calculateAverageRating(matchingReviews)
+        };
+      }
+
+      throw new Error('No product identifier provided');
     } catch (error) {
       logger.error(`Error fetching Kiyoh data: ${error.message}`);
-      throw error;
+      return { reviews: [], averageRating: 0, reviewCount: 0 };
     }
+  }
+
+  fuzzyMatchProduct(reviews, productName) {
+    if (!productName) return [];
+
+    const normalizedTarget = productName.toLowerCase();
+    const targetWords = normalizedTarget.split(/\s+/).filter(w => w.length > 3);
+
+    if (targetWords.length === 0) return [];
+
+    return reviews.filter(r => {
+      const reviewProduct = (r.productName || '').toLowerCase();
+      if (!reviewProduct) return false;
+
+      // Direct inclusion check
+      if (reviewProduct.includes(normalizedTarget) || normalizedTarget.includes(reviewProduct)) {
+        return true;
+      }
+
+      // Word overlap check (at least 70% of words match)
+      const reviewWords = reviewProduct.split(/\s+/);
+      const matches = targetWords.filter(tw => reviewWords.some(rw => rw.includes(tw)));
+      return matches.length / targetWords.length >= 0.7;
+    });
+  }
+
+  calculateAverageRating(reviews) {
+    if (reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+    return Number((sum / reviews.length).toFixed(1));
   }
 
   /**
