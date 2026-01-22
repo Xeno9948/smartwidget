@@ -26,8 +26,11 @@ async function handleQuestion(req, res, next) {
   let error = null;
 
   try {
-    const pCode = productCode || (productIdentifier?.type === 'gtin' ? productIdentifier.value : null);
-    const pName = productContext?.name || (productIdentifier?.type === 'name' ? productIdentifier.value : null);
+    // Ensure we extract clean strings (not objects or arrays)
+    const pCode = productCode || (productIdentifier?.type === 'gtin' ? String(productIdentifier.value || '') : null);
+    const pName = productContext?.name
+      ? String(productContext.name)
+      : (productIdentifier?.type === 'name' ? String(productIdentifier.value || '') : null);
 
     logger.info(`Processing question for location ${locationId}, product ${pCode || pName || 'unknown'}`);
 
