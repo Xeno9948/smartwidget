@@ -10,7 +10,7 @@ class APIClient {
   /**
    * Ask a question
    */
-  async askQuestion(locationId, question, productCode, language = 'nl') {
+  async askQuestion(locationId, question, productInfo, language = 'nl') {
     const response = await fetch(`${this.baseUrl}/qa`, {
       method: 'POST',
       headers: {
@@ -18,9 +18,12 @@ class APIClient {
       },
       body: JSON.stringify({
         locationId,
-        productCode,
         question,
-        language
+        language,
+        // Send product information (could be code, identifier, or context)
+        productCode: productInfo?.productCode || productInfo,
+        productIdentifier: productInfo?.productIdentifier,
+        productContext: productInfo?.productContext
       })
     });
 

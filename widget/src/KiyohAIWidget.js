@@ -1,4 +1,5 @@
-import GTINDetector from './utils/gtinDetector.js';
+import ProductDetector from './utils/productDetector.js';
+import ProductInfoScraper from './utils/productInfoScraper.js';
 import APIClient from './utils/apiClient.js';
 import { styles } from './styles.js';
 
@@ -14,8 +15,9 @@ class KiyohAIWidget extends HTMLElement {
     // State
     this.state = {
       locationId: null,
-      apiToken: null,
       productCode: null,
+      productIdentifier: null, // {type, value} from detector
+      productContext: null, // Scraped page info
       autoDetect: true,
       language: 'nl',
       primaryColor: '#00a0dc',
@@ -80,15 +82,24 @@ class KiyohAIWidget extends HTMLElement {
         this.state.apiBaseUrl || 'https://your-api-domain.com/api/v1'
       );
 
-      // Auto-detect GTIN if enabled
-      if (this.state.autoDetect && !this.state.productCode) {
-        console.log('[KiyohAIWidget] Auto-detecting GTIN...');
-        this.state.productCode = await GTINDetector.detect();
+      // Scrape product information from page
+      const scraper = new ProductInfoScraper();
+      this.state.productContext = scraper.scrape();
+      console.log('[KiyohAIWidget] Product context:', this.state.productContext);
 
-        if (!this.state.productCode) {
-          console.warn('[KiyohAIWidget] Could not auto-detect GTIN');
+      // Auto-detect product identifier if enabled
+      if (this.state.autoDetect && !this.state.productCode) {
+        console.log('[KiyohAIWidget] Auto-detecting product...');
+        this.state.productIdentifier = await ProductDetector.detect();
+
+        if (this.state.productIdentifier) {
+          console.log('[KiyohAIWidget] Detected:', this.state.productIdentifier);
+          // Use GTIN if available, otherwise use identifier value
+          if (this.state.productIdentifier.type === 'gtin') {
+            this.state.productCode = this.state.productIdentifier.value;
+          }
         } else {
-          console.log('[KiyohAIWidget] Detected GTIN:', this.state.productCode);
+          console.warn('[KiyohAIWidget] Could not detect product identifier');
         }
       }
 
@@ -132,20 +143,18 @@ class KiyohAIWidget extends HTMLElement {
 
     if (!question) return;
 
-    if (!this.state.productCode) {
-      this.setState({
-        error: 'Product code (GTIN) not found. Please add data-product-code attribute.'
-      });
-      return;
-    }
-
+    // Allow questions even without product code (will use product context/identifier)
     this.setState({ loading: true, error: null, answer: null });
 
     try {
       const response = await this.apiClient.askQuestion(
         this.state.locationId,
         question,
-        this.state.productCode,
+        {
+          productCode: this.state.productCode,
+          productIdentifier: this.state.productIdentifier,
+          productContext: this.state.productContext
+        },
         this.state.language
       );
 
@@ -157,7 +166,7 @@ class KiyohAIWidget extends HTMLElement {
 
         // Scroll to answer
         setTimeout(() => {
-          const answerEl = this.shadowRoot.querySelector('.answer-container');
+          const answerEl = this.shadowRoot.querySelector('.answer-section');
           if (answerEl) {
             answerEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
@@ -169,6 +178,8 @@ class KiyohAIWidget extends HTMLElement {
         loading: false,
         error: error.message || 'Failed to get answer. Please try again.'
       });
+    } finally {
+      textarea.value = '';
     }
   }
 

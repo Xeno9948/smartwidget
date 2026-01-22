@@ -1,59 +1,105 @@
 /**
- * Build optimized prompts for Google Gemini
+ * Build optimized prompts for Google Gemini with dual-source context
  */
 
-function buildQAPrompt(productData, reviews, question, language = 'nl') {
+function buildQAPrompt(productData, reviews, question, language = 'nl', productContext = null) {
   const { productName, gtin, averageRating, reviewCount } = productData;
 
   // Analyze reviews for common themes
   const { topPros, topCons, relevantReviews } = analyzeReviews(reviews, question);
 
-  const systemInstruction = getSystemInstruction(productName, language);
+  const systemInstruction = getSystemInstruction(productName, language, productContext);
+  const productSpecsSection = productContext ? buildProductSpecsSection(productContext, language) : '';
   const contextSection = buildContextSection(productName, gtin, averageRating, reviewCount, topPros, topCons);
   const reviewsSection = buildReviewsSection(relevantReviews);
-  const questionSection = `Vraag van klant: ${question}`;
+  const questionSection = language === 'nl' ? `Vraag van klant: ${question}` : `Customer question: ${question}`;
+
+  const prompt = [
+    productSpecsSection,
+    contextSection,
+    reviewsSection,
+    questionSection
+  ].filter(Boolean).join('\n\n');
 
   return {
     systemInstruction,
-    prompt: `${contextSection}\n\n${reviewsSection}\n\n${questionSection}`
+    prompt
   };
 }
 
-function getSystemInstruction(productName, language) {
+function getSystemInstruction(productName, language, productContext) {
+  const hasSpecs = productContext && (Object.keys(productContext.specs || {}).length > 0 || productContext.description);
+
   const instructions = {
     nl: `Je bent een objectieve productexpert assistent voor ${productName}.
 
-Je taak is om vragen te beantwoorden op basis van ALLEEN de echte klantbeoordelingen die je hebt ontvangen. Je verzint geen informatie en bent eerlijk over wat je wel en niet weet.
+Je hebt toegang tot ${hasSpecs ? 'TWEE informatiebronnen' : 'ÉÉN informatiebron'}:
+
+${hasSpecs ? `BRON 1: PRODUCTSPECIFICATIES (van fabrikant/verkoper)
+- Officiële specificaties, afmetingen, kenmerken
+- Productbeschrijving
+- Technische details
+
+BRON 2: KLANTBEOORDELINGEN (echte kopers via Kiyoh)` : 'BRON: KLANTBEOORDELINGEN (echte kopers via Kiyoh)'}
+- Ervaringen van echte gebruikers
+- Ratings en meningen
+- Praktische inzichten
 
 ANTWOORD RICHTLIJNEN:
-1. Baseer antwoorden UITSLUITEND op de gegeven review data
-2. Verwijs naar echte klanten: 'Uit reviews blijkt...', 'Klanten melden...'
-3. Quote specifieke reviews wanneer relevant (gebruik aanhalingstekens)
-4. Geef een gebalanceerd beeld (positief EN negatief als beide in reviews staan)
-5. Als informatie ontbreekt: 'In de reviews wordt dit niet specifiek genoemd'
-6. Houd antwoorden kort: maximaal 3-4 zinnen
-7. Gebruik vriendelijke, behulpzame toon
-8. Antwoord in het Nederlands
-9. Noem NOOIT concurrenten of alternatieve producten
-10. Voor technische vragen: gebruik exacte specs als beschikbaar
-11. Voor ervaringsvragen: verwijs naar ratings en review content`,
+1. Voor FEITELIJKE vragen (afmetingen, specs, kenmerken):
+   ${hasSpecs ? '→ Gebruik BRON 1 (Productspecificaties)' : '→ Zoek in reviewteksten of zeg "Niet vermeld in reviews"'}
+   → Verwijs: "Volgens de productspecificaties..."
+
+2. Voor ERVARINGSVRAGEN (kwaliteit, gebruiksgemak, geluid):
+   → Gebruik ${hasSpecs ? 'BRON 2' : 'reviews'} (Klantbeoordelingen)
+   → Verwijs: "Op basis van X klantreviews..."
+
+3. Voor GEMENGDE vragen:
+   → Combineer beide bronnen
+   → Geef duidelijk aan waar elk stukje info vandaan komt
+
+4. Als informatie NIET in bronnen staat:
+   → Zeg eerlijk "Deze informatie is niet beschikbaar"
+   → VERZIN NOOIT informatie
+
+5. Houd antwoorden kort: 3-4 zinnen
+6. Gebruik vriendelijke, behulpzame toon
+7. Noem NOOIT concurrenten`,
 
     en: `You are an objective product expert assistant for ${productName}.
 
-Your task is to answer questions based ONLY on the real customer reviews provided. You don't make up information and are honest about what you know and don't know.
+You have access to ${hasSpecs ? 'TWO information sources' : 'ONE information source'}:
+
+${hasSpecs ? `SOURCE 1: PRODUCT SPECIFICATIONS (from manufacturer/seller)
+- Official specifications, dimensions, features
+- Product description
+- Technical details
+
+SOURCE 2: CUSTOMER REVIEWS (real buyers via Kiyoh)` : 'SOURCE: CUSTOMER REVIEWS (real buyers via Kiyoh)'}
+- Real user experiences
+- Ratings and opinions
+- Practical insights
 
 ANSWER GUIDELINES:
-1. Base answers EXCLUSIVELY on the given review data
-2. Reference real customers: 'Reviews show...', 'Customers report...'
-3. Quote specific reviews when relevant (use quotation marks)
-4. Provide a balanced view (positive AND negative if both in reviews)
-5. If information is missing: 'This is not specifically mentioned in the reviews'
-6. Keep answers concise: maximum 3-4 sentences
-7. Use friendly, helpful tone
-8. Answer in English
-9. NEVER mention competitors or alternative products
-10. For technical questions: use exact specs if available
-11. For experience questions: reference ratings and review content`
+1. For FACTUAL questions (dimensions, specs, features):
+   ${hasSpecs ? '→ Use SOURCE 1 (Product Specifications)' : '→ Search review text or say "Not mentioned in reviews"'}
+   → Reference: "According to product specifications..."
+
+2. For EXPERIENCE questions (quality, ease of use, noise):
+   → Use ${hasSpecs ? 'SOURCE 2' : 'reviews'} (Customer Reviews)
+   → Reference: "Based on X customer reviews..."
+
+3. For MIXED questions:
+   → Combine both sources
+   → Clearly indicate where each piece of info comes from
+
+4. If information NOT in sources:
+   → Honestly say "This information is not available"
+   → NEVER make up information
+
+5. Keep answers concise: 3-4 sentences
+6. Use friendly, helpful tone
+7. NEVER mention competitors`
   };
 
   return instructions[language] || instructions.nl;
@@ -156,6 +202,53 @@ function calculateRelevance(review, question) {
 function formatDate(isoString) {
   const date = new Date(isoString);
   return date.toISOString().split('T')[0];
+}
+
+/**
+ * Build product specifications section from scraped context
+ */
+function buildProductSpecsSection(productContext, language = 'nl') {
+  if (!productContext) return '';
+
+  const { name, description, specs, attributes } = productContext;
+
+  const title = language === 'nl' ? 'PRODUCTSPECIFICATIES' : 'PRODUCT SPECIFICATIONS';
+  const sections = [];
+
+  // Product name
+  if (name) {
+    sections.push(`Product: ${name}`);
+  }
+
+  // Description
+  if (description && description.length > 10) {
+    const descTitle = language === 'nl' ? 'Beschrijving' : 'Description';
+    sections.push(`${descTitle}: ${description.slice(0, 300)}`); // Limit to 300 chars
+  }
+
+  // Specifications
+  if (specs && Object.keys(specs).length > 0) {
+    const specsTitle = language === 'nl' ? 'Technische specificaties' : 'Technical specifications';
+    sections.push(specsTitle + ':');
+    for (const [key, value] of Object.entries(specs)) {
+      const readableKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      sections.push(`- ${readableKey}: ${value}`);
+    }
+  }
+
+  // Attributes
+  if (attributes && Object.keys(attributes).length > 0) {
+    const attrsTitle = language === 'nl' ? 'Kenmerken' : 'Attributes';
+    sections.push(attrsTitle + ':');
+    for (const [key, value] of Object.entries(attributes)) {
+      const readableKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      sections.push(`- ${readableKey}: ${value}`);
+    }
+  }
+
+  if (sections.length === 0) return '';
+
+  return `${title}:\n${sections.join('\n')}`;
 }
 
 module.exports = { buildQAPrompt };
