@@ -85,8 +85,7 @@ class KiyohAIWidget extends HTMLElement {
       );
 
       // Scrape product information from page
-      const scraper = new ProductInfoScraper();
-      this.state.productContext = scraper.scrape();
+      this.state.productContext = ProductInfoScraper.scrape();
       console.log('[KiyohAIWidget] Product context:', this.state.productContext);
 
       // Auto-detect product identifier if enabled
