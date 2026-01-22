@@ -118,11 +118,24 @@ async function handleQuestion(req, res, next) {
       productContext
     );
 
+    logger.info(`🤖 Sending to Gemini AI:`, {
+      questionLength: question.length,
+      reviewCount: (kiyohData.reviews || []).length,
+      hasProductContext: !!productContext,
+      promptLength: prompt.length
+    });
+
     // Generate answer with Gemini
     const { answer, confidence, tokensUsed } = await geminiService.generateAnswer(
       systemInstruction,
       prompt
     );
+
+    logger.info(`✅ Gemini Response:`, {
+      answerLength: answer.length,
+      confidence,
+      tokensUsed
+    });
 
     // Extract relevant review snippets
     const relevantReviews = extractRelevantReviews(kiyohData.reviews || [], question, 3);
