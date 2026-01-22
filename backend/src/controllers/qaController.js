@@ -97,11 +97,12 @@ async function handleQuestion(req, res, next) {
     });
 
     if (!kiyohData.reviews || kiyohData.reviews.length === 0) {
-      // If no reviews but we have product context (specs), we can still proceed
-      if (!productContext || (!productContext.specs && !productContext.description)) {
+      // If no reviews but we have product context (any specs, title, or description), we can still proceed
+      if (!productContext || Object.keys(productContext).length === 0) {
+        // Only throw if we truly have nothing
         throw new Error('Product not found or no reviews available');
       }
-      logger.info('No reviews found, but using product context for answer');
+      logger.info('No reviews found, but using available product context for answer');
     }
 
     // Get product info
