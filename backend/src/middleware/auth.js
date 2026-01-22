@@ -61,7 +61,7 @@ function sanitizeInput(req, res, next) {
       .trim();
   }
 
-  if (req.body.productCode) {
+  if (req.body.productCode && typeof req.body.productCode === 'string') {
     // GTIN should only contain digits
     req.body.productCode = req.body.productCode.replace(/\D/g, '');
   }
