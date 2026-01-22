@@ -212,6 +212,44 @@ export const styles = `
     transform: none;
   }
 
+  .shop-header {
+    background: #f9fafb;
+    padding: 10px 16px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+  }
+  
+  .shop-rating-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #374151;
+  }
+  
+  .shop-stars {
+    color: #eb5b0c;
+    font-size: 16px;
+    letter-spacing: 1px;
+  }
+  
+  .shop-score {
+    font-weight: 700;
+  }
+  
+  .shop-reviews {
+    color: #6b7280;
+    font-size: 12px;
+  }
+  
+  .kiyoh-check {
+    color: #22c55e;
+    font-weight: bold;
+    margin-left: 2px;
+  }
+
   .loading {
     display: flex;
     align-items: center;
