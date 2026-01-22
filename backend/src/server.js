@@ -149,4 +149,47 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
+// Diagnostics Endpoint (Protected by Admin Key logic if possible, or just open for debugging temporarily)
+app.get('/admin/diagnose', async (req, res) => {
+  // Check auth header manually here for safety
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ') || authHeader.split(' ')[1] !== process.env.ADMIN_API_KEY) {
+    // Allow it temporarily if ADMIN_API_KEY is not set, otherwise 401
+    if (process.env.ADMIN_API_KEY) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
+  const diagnostics = {
+    timestamp: new Date().toISOString(),
+    env: {
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY ? `Present (${process.env.GEMINI_API_KEY.substring(0, 4)}...)` : 'MISSING ❌',
+      DATABASE_URL: process.env.DATABASE_URL ? 'Present' : 'MISSING ❌',
+      ADMIN_API_KEY: process.env.ADMIN_API_KEY ? 'Present' : 'MISSING ⚠️',
+      KIYOH_BASE_URL: process.env.KIYOH_BASE_URL || 'Default'
+    },
+    database: {
+      status: 'Unknown',
+      customerCount: 0,
+      customers: []
+    }
+  };
+
+  try {
+    const pool = require('./config/database');
+    if (pool) {
+      const result = await pool.query('SELECT location_id, company_name, length(api_token) as token_len FROM customers');
+      diagnostics.database.status = 'Connected ✅';
+      diagnostics.database.customerCount = result.rowCount;
+      diagnostics.database.customers = result.rows;
+    } else {
+      diagnostics.database.status = 'Pool not initialized ❌';
+    }
+  } catch (err) {
+    diagnostics.database.status = `Error: ${err.message} ❌`;
+  }
+
+  res.json(diagnostics);
+});
+
 start();
