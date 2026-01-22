@@ -26,6 +26,8 @@ class KiyohAIWidget extends HTMLElement {
       loading: false,
       error: null,
       answer: null,
+      shopRating: null,
+      shopReviewCount: null,
       popularQuestions: []
     };
 
@@ -161,7 +163,9 @@ class KiyohAIWidget extends HTMLElement {
       if (response.success) {
         this.setState({
           loading: false,
-          answer: response.data
+          answer: response.data,
+          shopRating: response.data.product.rating,
+          shopReviewCount: response.data.product.reviewCount
         });
 
         // Scroll to answer
@@ -209,17 +213,31 @@ class KiyohAIWidget extends HTMLElement {
   }
 
   render() {
-    const { answer, loading, error, popularQuestions } = this.state;
+    const { answer, loading, error, popularQuestions, shopRating, shopReviewCount } = this.state;
 
     this.shadowRoot.innerHTML = `
       <style>${styles}</style>
       <div class="widget-container">
+        
+        ${/* Shop Rating Header - NEW */ ''}
+        ${shopRating ? `
+          <div class="shop-header">
+             <div class="shop-rating-container">
+               <span class="shop-stars">${this.renderStars(shopRating)}</span>
+               <span class="shop-score">${shopRating}/10</span>
+               <span class="shop-reviews">(${shopReviewCount} reviews)</span>
+               <span class="kiyoh-check">✓</span>
+             </div>
+          </div>
+        ` : ''}
+
         ${error ? `
           <div class="error-message">
             ⚠️ ${error}
           </div>
         ` : ''}
 
+        ${/* Product specific header specific to the Answer */ ''}
         ${answer && answer.product && this.state.showProductInfo ? `
           <div class="product-header">
             ${answer.product.imageUrl ? `
@@ -227,12 +245,6 @@ class KiyohAIWidget extends HTMLElement {
             ` : ''}
             <div class="product-info">
               <div class="product-name">${answer.product.name}</div>
-              <div class="product-rating">
-                <span class="stars">${this.renderStars(answer.product.rating)}</span>
-                <span>${answer.product.rating}/10</span>
-                <span>•</span>
-                <span>${answer.product.reviewCount} reviews</span>
-              </div>
             </div>
           </div>
         ` : ''}
@@ -265,7 +277,7 @@ class KiyohAIWidget extends HTMLElement {
           <div class="answer-container">
             <div class="answer-header">
               <div class="ai-icon">AI</div>
-              <span class="answer-title">Antwoord gebaseerd op ${answer.product.reviewCount} reviews</span>
+              <span class="answer-title">Antwoord gebaseerd op reviews</span>
               <span class="confidence-badge confidence-${answer.confidence}">${answer.confidence}</span>
             </div>
             <div class="answer-text">${answer.answer}</div>
