@@ -66,7 +66,8 @@ class KiyohAPI {
       throw new Error('No product identifier provided');
     } catch (error) {
       logger.error(`Error fetching Kiyoh data: ${error.message}`);
-      return { reviews: [], averageRating: 0, reviewCount: 0 };
+      logger.info(`Kiyoh API returned empty/error - continuing without reviews`);
+      return { reviews: [], averageRating: 0, reviewCount: 0, products: [] };
     }
   }
 
