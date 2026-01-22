@@ -164,7 +164,7 @@ export const styles = `
     padding: 1rem 2rem;
     border: none;
     border-radius: 14px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, rgba(var(--primary-rgb), 0.8) 100%);
+    background: linear-gradient(135deg, #eb5b0c 0%, #d94e08 100%);
     color: white;
     font-size: 1rem;
     font-weight: 600;
@@ -265,7 +265,7 @@ export const styles = `
   .ai-icon {
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, rgba(var(--primary-rgb), 0.7) 100%);
+    background: linear-gradient(135deg, #eb5b0c 0%, #d94e08 100%);
     border-radius: 8px;
     display: flex;
     align-items: center;
