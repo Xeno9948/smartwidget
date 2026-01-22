@@ -31,6 +31,9 @@ async function handleQuestion(req, res, next) {
 
     logger.info(`Processing question for location ${locationId}, product ${pCode || pName || 'unknown'}`);
 
+    // Log environment status
+    logger.info(`Env Check - GEMINI: ${process.env.GEMINI_API_KEY ? 'Set' : 'Missing'}, KIYOH_URL: ${process.env.KIYOH_BASE_URL || 'Default'}`);
+
     // Fetch customer and API token from database
     const customer = await customerService.getCustomerByLocationId(locationId);
 
@@ -41,7 +44,15 @@ async function handleQuestion(req, res, next) {
       });
     }
 
+    logger.info(`Customer found: ${customer.company_name} (ID: ${customer.id})`);
+
     const apiToken = customer.api_token;
+    if (!apiToken) {
+      logger.error('API Token is missing in database object:', Object.keys(customer));
+      throw new Error('Customer configuration error: API token missing');
+    }
+
+    logger.info(`Using Kiyoh Token: ${apiToken.substring(0, 4)}...${apiToken.substring(apiToken.length - 4)}`);
 
     // Check cache for Q&A (only if we have a stable identifier like GTIN)
     if (pCode) {
