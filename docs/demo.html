@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kiyoh AI Widget - Demo</title>
+
+  <!-- Product Schema.org JSON-LD (for GTIN auto-detection) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Rowenta X-Clean 2-in-1 Stofzuiger",
+    "image": "https://images.unsplash.com/photo-1558317374-067fb5f30001?w=400",
+    "description": "Krachtige 2-in-1 steelstofzuiger met cyclonische technologie",
+    "brand": {
+      "@type": "Brand",
+      "name": "Rowenta"
+    },
+    "gtin13": "8710103974833",
+    "offers": {
+      "@type": "Offer",
+      "price": "149.99",
+      "priceCurrency": "EUR"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "8.4",
+      "reviewCount": "156"
+    }
+  }
+  </script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .demo-header {
+      text-align: center;
+      color: white;
+      margin-bottom: 3rem;
+    }
+
+    .demo-header h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .demo-header p {
+      font-size: 1.25rem;
+      opacity: 0.9;
+    }
+
+    .demo-product {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .product-details {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .product-details img {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-details h2 {
+      font-size: 2rem;
+      color: #1a1a1a;
+      margin-bottom: 0.5rem;
+    }
+
+    .product-details p {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .demo-widget {
+      margin-top: 2rem;
+    }
+
+    .demo-info {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .demo-info h3 {
+      color: #1a1a1a;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+
+    .demo-info pre {
+      background: #1a1a1a;
+      color: #00ff00;
+      padding: 1.5rem;
+      border-radius: 12px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .demo-info code {
+      font-family: 'Courier New', monospace;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      border-radius: 12px;
+      color: white;
+    }
+
+    .feature-card h4 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      margin: 0.25rem;
+    }
+
+    @media (max-width: 768px) {
+      .demo-header h1 {
+        font-size: 2rem;
+      }
+
+      .product-details {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .product-details img {
+        width: 100%;
+        max-width: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <!-- Header -->
+    <div class="demo-header">
+      <h1>🤖 Kiyoh AI Q&A Widget</h1>
+      <p>Intelligent product questions powered by real customer reviews</p>
+      <div style="margin-top: 1.5rem;">
+        <span class="badge">✨ Liquid Glass UI</span>
+        <span class="badge">🔍 Auto GTIN Detection</span>
+        <span class="badge">🤖 AI-Powered</span>
+        <span class="badge">⚡ Lightning Fast</span>
+      </div>
+    </div>
+
+    <!-- Product Display -->
+    <div class="demo-product">
+      <div class="product-details">
+        <img src="https://images.unsplash.com/photo-1558317374-067fb5f30001?w=400" alt="Rowenta Stofzuiger">
+        <div>
+          <h2>Rowenta X-Clean 2-in-1 Stofzuiger</h2>
+          <p><strong>GTIN:</strong> 8710103974833</p>
+          <p>Krachtige 2-in-1 steelstofzuiger met cyclonische technologie. Perfect voor dagelijks gebruik op alle vloertypen.</p>
+        </div>
+      </div>
+
+      <!-- The Widget -->
+      <div class="demo-widget">
+        <kiyoh-ai-widget
+          data-location-id="1051093"
+          data-api-token="030cb8d4-473b-400b-87cc-7c7a21a51499"
+          data-auto-detect="true"
+          data-language="nl"
+          data-show-product-info="true"
+          data-api-base-url="http://localhost:3000/api/v1">
+        </kiyoh-ai-widget>
+      </div>
+    </div>
+
+    <!-- Installation Instructions -->
+    <div class="demo-info">
+      <h3>📦 Installation</h3>
+      <pre><code>&lt;!-- 1. Add the script --&gt;
+&lt;script src="https://your-cdn.com/widget.min.js"&gt;&lt;/script&gt;
+
+&lt;!-- 2. Add the widget element --&gt;
+&lt;kiyoh-ai-widget
+  data-location-id="1051093"
+  data-api-token="your-kiyoh-api-token"
+  data-auto-detect="true"&gt;
+&lt;/kiyoh-ai-widget&gt;</code></pre>
+    </div>
+
+    <!-- Features -->
+    <div class="demo-info">
+      <h3>✨ Features</h3>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>🔍 Smart Detection</h4>
+          <p>Automatically finds product GTINs from Schema.org, meta tags, and e-commerce platforms</p>
+        </div>
+        <div class="feature-card">
+          <h4>🤖 AI Answers</h4>
+          <p>Uses Google Gemini to generate intelligent responses based on real reviews</p>
+        </div>
+        <div class="feature-card">
+          <h4>💎 Liquid Glass UI</h4>
+          <p>Modern glassmorphism design with smooth animations and transitions</p>
+        </div>
+        <div class="feature-card">
+          <h4>⚡ Lightning Fast</h4>
+          <p>Redis caching ensures sub-second response times for repeated questions</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Try These Questions -->
+    <div class="demo-info">
+      <h3>💡 Try These Questions</h3>
+      <ul style="list-style: none; padding: 0;">
+        <li style="padding: 0.5rem; background: rgba(0, 160, 220, 0.1); margin: 0.5rem 0; border-radius: 8px;">
+          ❓ "Is dit apparaat stil?"
+        </li>
+        <li style="padding: 0.5rem; background: rgba(0, 160, 220, 0.1); margin: 0.5rem 0; border-radius: 8px;">
+          ❓ "Werkt het goed op tapijt?"
+        </li>
+        <li style="padding: 0.5rem; background: rgba(0, 160, 220, 0.1); margin: 0.5rem 0; border-radius: 8px;">
+          ❓ "Hoe lang gaat de batterij mee?"
+        </li>
+        <li style="padding: 0.5rem; background: rgba(0, 160, 220, 0.1); margin: 0.5rem 0; border-radius: 8px;">
+          ❓ "Is hij zwaar om te gebruiken?"
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Load the widget script -->
+  <script src="../widget/dist/widget.js"></script>
+</body>
+</html>

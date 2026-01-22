@@ -1,0 +1,30 @@
+{
+  "name": "kiyoh-ai-qa-widget",
+  "version": "1.0.0",
+  "description": "Embeddable AI-powered product Q&A widget using Kiyoh reviews and Google Gemini",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "widget"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:widget": "npm run dev --workspace=widget",
+    "build": "npm run build --workspace=backend && npm run build --workspace=widget",
+    "start": "npm start --workspace=backend",
+    "test": "npm test --workspaces",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "keywords": [
+    "kiyoh",
+    "ai",
+    "qa",
+    "widget",
+    "gemini",
+    "reviews"
+  ],
+  "author": "",
+  "license": "MIT"
+}
