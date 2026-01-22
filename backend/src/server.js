@@ -26,9 +26,22 @@ app.use(helmet({
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS === '*'
-    ? '*'
-    : process.env.ALLOWED_ORIGINS.split(','),
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (process.env.ALLOWED_ORIGINS === '*') {
+      // Allow any origin but reflect it back (required when credentials: true)
+      return callback(null, origin);
+    }
+
+    const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 };
 app.use(cors(corsOptions));
