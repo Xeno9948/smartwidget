@@ -126,6 +126,15 @@ class KiyohAIWidget extends HTMLElement {
         this.setState({
           popularQuestions: response.data.questions.slice(0, 5)
         });
+      } else {
+        // Fallback: Use default questions if none found
+        this.setState({
+          popularQuestions: [
+            { question: "Wat zijn de belangrijkste plus- en minpunten?" },
+            { question: "Wat zeggen klanten over de kwaliteit?" },
+            { question: "Zou je dit product aanraden?" }
+          ]
+        });
       }
     } catch (error) {
       console.warn('[KiyohAIWidget] Could not load popular questions:', error);
