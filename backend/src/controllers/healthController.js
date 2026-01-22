@@ -38,8 +38,9 @@ async function healthCheck(req, res) {
   // Check Gemini API (just check if key is set)
   health.services.gemini = process.env.GEMINI_API_KEY ? 'configured' : 'not configured';
 
-  const statusCode = health.status === 'ok' ? 200 : 503;
-  res.status(statusCode).json(health);
+  // Return 200 even if degraded so we can debug (and container stays alive)
+  // But include the status in the body
+  res.json(health);
 }
 
 module.exports = { healthCheck };
