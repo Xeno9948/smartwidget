@@ -91,9 +91,15 @@ app.use(errorHandler);
 // Initialize and start server
 async function start() {
   try {
-    // Initialize Redis
-    await initRedis();
-    logger.info('✓ Redis initialized');
+    // Initialize Redis (optional)
+    try {
+      await initRedis();
+      if (process.env.REDIS_URL) {
+        logger.info('✓ Redis initialized');
+      }
+    } catch (error) {
+      logger.warn(`Redis initialization failed: ${error.message} - continuing without cache`);
+    }
 
     // Start server
     app.listen(PORT, () => {
