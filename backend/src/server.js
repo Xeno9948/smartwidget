@@ -15,6 +15,10 @@ const logger = require('./utils/logger');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Enable trust proxy for Railway/Heroku/AWS load balancers
+// This fixes: ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
