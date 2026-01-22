@@ -11,7 +11,7 @@ const crypto = require('crypto');
 const kiyohAPI = new KiyohAPI(process.env.KIYOH_BASE_URL);
 const geminiService = new GeminiService(
   process.env.GEMINI_API_KEY,
-  process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest'
 );
 const cacheService = new CacheService();
 
