@@ -34,8 +34,8 @@ export const styles = `
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid var(--glass-border);
     border-radius: var(--border-radius);
-    padding: 2rem;
-    max-width: 800px;
+    padding: 1.25rem;
+    max-width: 560px;
     margin: 0 auto;
     box-shadow:
       0 8px 32px var(--glass-shadow),
