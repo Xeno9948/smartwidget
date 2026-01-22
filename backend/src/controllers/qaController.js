@@ -166,23 +166,27 @@ async function handleQuestion(req, res, next) {
       await cacheService.cacheQA(pCode, question, responseData);
     }
 
-    // Save to database
+    // Save to database (non-blocking - don't crash if it fails)
     const questionHash = crypto.createHash('md5')
       .update(question.toLowerCase().trim())
       .digest('hex');
 
     // Only save if we have a product code, otherwise it's hard to retrieve
     if (pCode) {
-      await QAPair.create({
-        locationId,
-        productCode: pCode,
-        question,
-        questionHash,
-        answer,
-        confidence,
-        language,
-        tokensUsed
-      });
+      try {
+        await QAPair.create({
+          locationId,
+          productCode: pCode,
+          question,
+          questionHash,
+          answer,
+          confidence,
+          language,
+          tokensUsed
+        });
+      } catch (err) {
+        logger.warn('Failed to save Q&A pair (non-critical):', err.message);
+      }
     }
 
     // Increment question counter
@@ -190,17 +194,21 @@ async function handleQuestion(req, res, next) {
       await cacheService.incrementQuestionCount(locationId, pCode, question);
     }
 
-    // Log analytics
-    await Analytics.log({
-      locationId,
-      productCode: pCode || 'unknown',
-      question,
-      answerProvided: true,
-      cached: false,
-      responseTimeMs: Date.now() - startTime,
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent')
-    });
+    // Log analytics (non-blocking)
+    try {
+      await Analytics.log({
+        locationId,
+        productCode: pCode || 'unknown',
+        question,
+        answerProvided: true,
+        cached: false,
+        responseTimeMs: Date.now() - startTime,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent')
+      });
+    } catch (err) {
+      logger.warn('Failed to log analytics (non-critical):', err.message);
+    }
 
     res.json({
       success: true,
