@@ -3,17 +3,18 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files from backend directory
+COPY backend/package*.json ./
 
 # Install dependencies
 RUN npm install --omit=dev
 
 # Copy backend source code
-COPY src ./src
+COPY backend/src ./src
 
-# Copy widget dist files (must be built before docker build)
-COPY ../widget/dist ../widget/dist
+# Copy widget dist files
+# Note: widget must be built before Docker build
+COPY widget/dist ./widget/dist/
 
 # Expose port
 EXPOSE 3000
