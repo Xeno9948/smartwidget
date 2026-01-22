@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
 const { initRedis } = require('./config/redis');
@@ -46,6 +47,19 @@ app.get('/health', healthCheck);
 // API routes
 app.use('/api/v1/qa', qaRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
+
+// Serve widget files statically
+const widgetPath = path.join(__dirname, '../../widget/dist');
+app.use('/widget', express.static(widgetPath, {
+  setHeaders: (res, filepath) => {
+    // Enable CORS for widget files
+    res.set('Access-Control-Allow-Origin', '*');
+    // Cache widget files for 1 hour
+    if (filepath.endsWith('.js') || filepath.endsWith('.css')) {
+      res.set('Cache-Control', 'public, max-age=3600');
+    }
+  }
+}));
 
 // Root endpoint
 app.get('/', (req, res) => {

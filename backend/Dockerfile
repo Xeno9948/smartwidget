@@ -9,8 +9,11 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install --omit=dev
 
-# Copy source code
-COPY . .
+# Copy backend source code
+COPY src ./src
+
+# Copy widget dist files (must be built before docker build)
+COPY ../widget/dist ../widget/dist
 
 # Expose port
 EXPOSE 3000
