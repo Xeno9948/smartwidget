@@ -1,6 +1,7 @@
 /**
  * Product Information Scraper
  * Extracts comprehensive product information from hosting page
+ * AGGRESSIVE MODE - scans entire page
  */
 
 class ProductInfoScraper {
@@ -104,56 +105,81 @@ class ProductInfoScraper {
     }
 
     /**
-     * Extract technical specifications from tables/lists
+     * Extract technical specifications - AGGRESSIVE MODE
+     * Scans ALL tables, lists, and divs on page
      */
     extractSpecifications() {
         const specs = {};
 
-        // Extract from tables
-        const tables = document.querySelectorAll('table[class*="spec"], table[class*="specification"], table.features, table.details');
-        tables.forEach(table => {
+        // Strategy 1: Extract from ANY table on the page
+        const allTables = document.querySelectorAll('table');
+        allTables.forEach(table => {
             const rows = table.querySelectorAll('tr');
             rows.forEach(row => {
                 const cells = row.querySelectorAll('th, td');
                 if (cells.length >= 2) {
                     const key = cells[0].textContent.trim();
                     const value = cells[1].textContent.trim();
-                    if (key && value) {
+                    // Only add if key looks like a spec name
+                    if (key && value && key.length < 50 && value.length < 200) {
                         specs[this.normalizeKey(key)] = value;
                     }
                 }
             });
         });
 
-        // Extract from definition lists
-        const dls = document.querySelectorAll('dl[class*="spec"], dl[class*="attribute"], dl.product-info');
-        dls.forEach(dl => {
+        // Strategy 2: Extract from ANY definition list
+        const allDls = document.querySelectorAll('dl');
+        allDls.forEach(dl => {
             const dts = dl.querySelectorAll('dt');
             const dds = dl.querySelectorAll('dd');
             dts.forEach((dt, i) => {
                 if (dds[i]) {
                     const key = dt.textContent.trim();
                     const value = dds[i].textContent.trim();
-                    if (key && value) {
+                    if (key && value && key.length < 50) {
                         specs[this.normalizeKey(key)] = value;
                     }
                 }
             });
         });
 
-        // Extract from structured data attributes
+        // Strategy 3: Find divs with key-value patterns
+        // Look for: <div>LABEL</div><div>VALUE</div>
+        const allDivs = document.querySelectorAll('div');
+        for (let i = 0; i < allDivs.length - 1; i++) {
+            const div1 = allDivs[i];
+            const div2 = allDivs[i + 1];
+
+            // Skip if they have children
+            if (div1.children.length === 0 && div2.children.length === 0) {
+                const text1 = div1.textContent.trim();
+                const text2 = div2.textContent.trim();
+
+                // Labels often ALL CAPS or short
+                if (text1.length > 2 && text1.length < 50 &&
+                    text2.length > 0 && text2.length < 200 &&
+                    text1.toUpperCase() === text1) {
+                    specs[this.normalizeKey(text1)] = text2;
+                }
+            }
+        }
+
+        // Strategy 4: Data attributes
         const specElements = document.querySelectorAll('[data-spec], [itemprop]');
         specElements.forEach(el => {
             const key = el.dataset.spec || el.getAttribute('itemprop');
             const value = el.textContent?.trim() || el.content;
-            if (key && value) {
+            if (key && value && key.length < 50) {
                 specs[this.normalizeKey(key)] = value;
             }
         });
 
         if (Object.keys(specs).length > 0) {
             this.productInfo.specs = specs;
-            console.log('[ProductInfoScraper] Found', Object.keys(specs).length, 'specifications');
+            console.log('[ProductInfoScraper] Found', Object.keys(specs).length, 'specifications:', specs);
+        } else {
+            console.warn('[ProductInfoScraper] No specifications found on page');
         }
     }
 
