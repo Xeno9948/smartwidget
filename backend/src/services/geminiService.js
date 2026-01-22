@@ -5,7 +5,7 @@ const logger = require('../utils/logger');
  * Google Gemini API Integration
  */
 class GeminiService {
-  constructor(apiKey, model = 'gemini-1.5-flash') {
+  constructor(apiKey, model = 'gemini-2.5-flash') {
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY is required');
     }
