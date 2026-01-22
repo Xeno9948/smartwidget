@@ -17,7 +17,7 @@ router.post(
   '/',
   ipRateLimit,
   locationRateLimit,
-  validateToken,
+  // validateToken - REMOVED: Widget is public, token is looked up in DB via locationId
   sanitizeInput,
   validateQARequest,
   handleQuestion
