@@ -52,7 +52,15 @@ app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/admin', adminRoutes); // Admin API for customer management
 
 // Serve widget files statically
-const widgetPath = path.join(__dirname, '../../widget/dist');
+const fs = require('fs');
+// Try local path first
+let widgetPath = path.join(__dirname, '../../widget/dist');
+// If not found, try Docker path
+if (!fs.existsSync(widgetPath)) {
+  widgetPath = path.join(__dirname, '../widget/dist');
+}
+logger.info(`Serving widget files from: ${widgetPath}`);
+
 app.use('/widget', express.static(widgetPath, {
   setHeaders: (res, filepath) => {
     // Enable CORS for widget files
