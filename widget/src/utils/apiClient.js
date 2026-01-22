@@ -10,19 +10,17 @@ class APIClient {
   /**
    * Ask a question
    */
-  async askQuestion(locationId, apiToken, question, productCode, language = 'nl') {
+  async askQuestion(locationId, question, productCode, language = 'nl') {
     const response = await fetch(`${this.baseUrl}/qa`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-Api-Token': apiToken
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         locationId,
         productCode,
         question,
-        language,
-        apiToken
+        language
       })
     });
 

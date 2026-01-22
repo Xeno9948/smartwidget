@@ -1,6 +1,7 @@
 const KiyohAPI = require('../services/kiyohAPI');
 const GeminiService = require('../services/geminiService');
 const CacheService = require('../services/cacheService');
+const customerService = require('../services/customerService');
 const QAPair = require('../models/QAPair');
 const Analytics = require('../models/Analytics');
 const { buildQAPrompt } = require('../utils/promptBuilder');
@@ -10,7 +11,7 @@ const crypto = require('crypto');
 const kiyohAPI = new KiyohAPI(process.env.KIYOH_BASE_URL);
 const geminiService = new GeminiService(
   process.env.GEMINI_API_KEY,
-  process.env.GEMINI_MODEL || 'gemini-1.5-flash'
+  process.env.GEMINI_MODEL || 'gemini-2.5-flash'
 );
 const cacheService = new CacheService();
 
@@ -20,13 +21,24 @@ const cacheService = new CacheService();
 async function handleQuestion(req, res, next) {
   const startTime = Date.now();
   const { locationId, productCode, question, language = 'nl' } = req.body;
-  const apiToken = req.apiToken;
 
   let cached = false;
   let error = null;
 
   try {
     logger.info(`Processing question for location ${locationId}, product ${productCode}`);
+
+    // Fetch customer and API token from database
+    const customer = await customerService.getCustomerByLocationId(locationId);
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        error: 'Customer not found. Please contact support to activate your widget.'
+      });
+    }
+
+    const apiToken = customer.api_token;
 
     // Check cache for Q&A
     if (productCode) {

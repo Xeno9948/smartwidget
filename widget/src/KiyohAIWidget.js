@@ -33,7 +33,6 @@ class KiyohAIWidget extends HTMLElement {
   static get observedAttributes() {
     return [
       'data-location-id',
-      'data-api-token',
       'data-product-code',
       'data-auto-detect',
       'data-language',
@@ -46,7 +45,6 @@ class KiyohAIWidget extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     const mapping = {
       'data-location-id': 'locationId',
-      'data-api-token': 'apiToken',
       'data-product-code': 'productCode',
       'data-auto-detect': 'autoDetect',
       'data-language': 'language',
@@ -75,10 +73,6 @@ class KiyohAIWidget extends HTMLElement {
       // Validate required attributes
       if (!this.state.locationId) {
         throw new Error('data-location-id is required');
-      }
-
-      if (!this.state.apiToken) {
-        throw new Error('data-api-token is required');
       }
 
       // Initialize API client
@@ -150,7 +144,6 @@ class KiyohAIWidget extends HTMLElement {
     try {
       const response = await this.apiClient.askQuestion(
         this.state.locationId,
-        this.state.apiToken,
         question,
         this.state.productCode,
         this.state.language

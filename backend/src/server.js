@@ -4,9 +4,11 @@ const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
 const { initRedis } = require('./config/redis');
+const { runMigrations } = require('./db/migrator');
 const errorHandler = require('./middleware/errorHandler');
 const { healthCheck } = require('./controllers/healthController');
 const qaRoutes = require('./routes/qa');
+const adminRoutes = require('./routes/admin');
 const analyticsRoutes = require('./routes/analytics');
 const logger = require('./utils/logger');
 
@@ -47,6 +49,7 @@ app.get('/health', healthCheck);
 // API routes
 app.use('/api/v1/qa', qaRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/admin', adminRoutes); // Admin API for customer management
 
 // Serve widget files statically
 const widgetPath = path.join(__dirname, '../../widget/dist');
@@ -91,6 +94,13 @@ app.use(errorHandler);
 // Initialize and start server
 async function start() {
   try {
+    // Run database migrations (if PostgreSQL is available)
+    try {
+      await runMigrations();
+    } catch (error) {
+      logger.warn(`Migration warning: ${error.message} - continuing without migrations`);
+    }
+
     // Initialize Redis (optional)
     try {
       await initRedis();
@@ -106,6 +116,7 @@ async function start() {
       logger.info(`✓ Server running on port ${PORT}`);
       logger.info(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`✓ API ready at http://localhost:${PORT}/api/v1/qa`);
+      logger.info(`✓ Admin API ready at http://localhost:${PORT}/admin`);
     });
   } catch (error) {
     logger.error(`Failed to start server: ${error.message}`);
