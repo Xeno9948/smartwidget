@@ -66,9 +66,12 @@ async function handleQuestion(req, res, next) {
       pCode = String(productIdentifier.value || '');
     }
 
-    // Fallback to scraped context
+    // Fallback to scraped context - PRIORITY: productId > gtin > sku
     if (!pCode && productContext) {
-      pCode = productContext.gtin || productContext.sku || productContext.productId || null;
+      pCode = productContext.productId || productContext.gtin || productContext.sku || null;
+      if (pCode) {
+        logger.info(`Using product identifier from context: ${pCode} (source: ${productContext.productId ? 'productId' : productContext.gtin ? 'gtin' : 'sku'})`);
+      }
     }
 
     const pName = productContext?.name
