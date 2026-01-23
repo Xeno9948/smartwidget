@@ -28,6 +28,7 @@ class KiyohAPI {
       const url = `${this.baseUrl}/v1/publication/product/review/external?locationId=${locationId}&productCode=${encodeURIComponent(productCode)}`;
 
       logger.info(`Fetching Kiyoh reviews from: ${url}`);
+      logger.info(`DEBUG: productCode raw="${productCode}", encoded="${encodeURIComponent(productCode)}"`);
 
       const response = await fetch(url, {
         method: 'GET',

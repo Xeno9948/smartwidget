@@ -2,6 +2,7 @@ const KiyohAPI = require('../services/kiyohAPI');
 const GeminiService = require('../services/geminiService');
 const CacheService = require('../services/cacheService');
 const customerService = require('../services/customerService');
+const scraperService = require('../services/scraperService');
 const QAPair = require('../models/QAPair');
 const Analytics = require('../models/Analytics');
 const { buildQAPrompt } = require('../utils/promptBuilder');
@@ -20,12 +21,28 @@ const cacheService = new CacheService();
  */
 async function handleQuestion(req, res, next) {
   const startTime = Date.now();
-  const { locationId, productCode, productIdentifier, productContext, question, language = 'nl' } = req.body;
+  let { locationId, productCode, productIdentifier, productContext, question, language = 'nl', sourceUrl } = req.body;
 
   let cached = false;
   let error = null;
 
   try {
+    // 1. Fallback Scraper Logic
+    if ((!productContext || Object.keys(productContext).length === 0) && sourceUrl) {
+      logger.info(`Frontend context missing. Attempting backend scrape for: ${sourceUrl}`);
+      try {
+        const scrapedContext = await scraperService.scrape(sourceUrl);
+        if (scrapedContext) {
+          productContext = scrapedContext;
+          logger.info('Backend scrape successful');
+        } else {
+          logger.warn('Backend scrape returned no data');
+        }
+      } catch (scrapeErr) {
+        logger.error(`Backend scrape failed: ${scrapeErr.message}`);
+      }
+    }
+
     // Ensure we extract clean strings (not objects or arrays)
     const pCode = productCode || (productIdentifier?.type === 'gtin' ? String(productIdentifier.value || '') : null);
     const pName = productContext?.name

@@ -165,7 +165,8 @@ class KiyohAIWidget extends HTMLElement {
           productIdentifier: this.state.productIdentifier,
           productContext: this.state.productContext
         },
-        this.state.language
+        this.state.language,
+        window.location.href // Send Source URL for backend scraper fallback
       );
 
       if (response.success) {
