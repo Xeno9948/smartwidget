@@ -333,9 +333,9 @@ class KiyohAIWidget extends HTMLElement {
       textarea.addEventListener('input', (e) => this.handleInputChange(e));
     }
 
-    const questionButtons = this.shadowRoot.querySelectorAll('.question-button');
-    questionButtons.forEach((btn, index) => {
-      btn.addEventListener('click', () => {
+    const suggestionChips = this.shadowRoot.querySelectorAll('.suggestion-chip');
+    suggestionChips.forEach((chip, index) => {
+      chip.addEventListener('click', () => {
         const question = popularQuestions[index]?.question;
         if (question) {
           this.handlePopularQuestionClick(question);
