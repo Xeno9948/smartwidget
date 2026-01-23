@@ -35,6 +35,12 @@ async function handleQuestion(req, res, next) {
         if (scrapedContext) {
           productContext = scrapedContext;
           logger.info('Backend scrape successful');
+
+          // Use scraped identifiers if no explicit productCode provided
+          if (!productCode && (scrapedContext.sku || scrapedContext.productId || scrapedContext.gtin)) {
+            productCode = scrapedContext.gtin || scrapedContext.sku || scrapedContext.productId;
+            logger.info(`Using scraped product identifier: ${productCode}`);
+          }
         } else {
           logger.warn('Backend scrape returned no data');
         }
@@ -43,8 +49,27 @@ async function handleQuestion(req, res, next) {
       }
     }
 
-    // Ensure we extract clean strings (not objects or arrays)
-    const pCode = productCode || (productIdentifier?.type === 'gtin' ? String(productIdentifier.value || '') : null);
+    // 2. Extract clean product identifiers (handle objects/strings)
+    let pCode = null;
+
+    //If productCode is an object (frontend bug), try to extract value
+    if (productCode && typeof productCode === 'object') {
+      logger.warn(`productCode is an object, attempting extraction: ${JSON.stringify(productCode)}`);
+      pCode = productCode.value || productCode.code || productCode.sku || productCode.gtin || null;
+    } else if (productCode && typeof productCode === 'string') {
+      pCode = productCode;
+    }
+
+    // Fallback to productIdentifier
+    if (!pCode && productIdentifier?.type === 'gtin') {
+      pCode = String(productIdentifier.value || '');
+    }
+
+    // Fallback to scraped context
+    if (!pCode && productContext) {
+      pCode = productContext.gtin || productContext.sku || productContext.productId || null;
+    }
+
     const pName = productContext?.name
       ? String(productContext.name)
       : (productIdentifier?.type === 'name' ? String(productIdentifier.value || '') : null);
