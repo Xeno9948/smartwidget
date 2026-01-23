@@ -27,9 +27,10 @@ async function handleQuestion(req, res, next) {
   let error = null;
 
   try {
-    // 1. Fallback Scraper Logic
-    if ((!productContext || Object.keys(productContext).length === 0) && sourceUrl) {
-      logger.info(`Frontend context missing. Attempting backend scrape for: ${sourceUrl}`);
+    // 1. Fallback Scraper Logic - run if no context OR if context has no identifiers
+    const hasIdentifiers = productContext && (productContext.sku || productContext.productId || productContext.gtin);
+    if ((!productContext || Object.keys(productContext).length === 0 || !hasIdentifiers) && sourceUrl) {
+      logger.info(`Frontend context missing identifiers. Attempting backend scrape for: ${sourceUrl}`);
       try {
         const scrapedContext = await scraperService.scrape(sourceUrl);
         if (scrapedContext) {

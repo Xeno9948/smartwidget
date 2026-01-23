@@ -9,13 +9,22 @@ const ProductInfoScraper = {
      * @returns {Object} Scraped product data
      */
     scrape() {
+        const jsonLd = this.getJsonLd();
+
         return {
-            title: this.getMetaContent('og:title') || document.title,
-            description: this.getMetaContent('og:description') || this.getMetaContent('description'),
+            // Core identifiers from JSON-LD (CRITICAL for reviews)
+            sku: jsonLd?.sku || null,
+            productId: jsonLd?.productID || jsonLd?.identifier || null,
+            gtin: jsonLd?.gtin13 || jsonLd?.gtin || jsonLd?.gtin12 || jsonLd?.gtin8 || null,
+            mpn: jsonLd?.mpn || null,
+
+            // Product details
+            name: jsonLd?.name || this.getMetaContent('og:title') || document.title,
+            description: jsonLd?.description || this.getMetaContent('og:description') || this.getMetaContent('description'),
             url: window.location.href,
             price: this.getProductPrice(),
             currency: this.getCurrency(),
-            image: this.getMetaContent('og:image'),
+            image: jsonLd?.image || this.getMetaContent('og:image'),
             specs: this.extractBasicSpecs()
         };
     },
