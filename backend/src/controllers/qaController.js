@@ -90,153 +90,167 @@ async function handleQuestion(req, res, next) {
       }
     }
 
-    // Fetch product reviews from Kiyoh
-    const kiyohData = await kiyohAPI.getProductReviews(locationId, apiToken, {
-      productCode: pCode,
-      productName: pName
-    });
-
-    if (!kiyohData.reviews || kiyohData.reviews.length === 0) {
-      // If no reviews but we have product context (any specs, title, or description), we can still proceed
-      if (!productContext || Object.keys(productContext).length === 0) {
-        // Only throw if we truly have nothing
-        throw new Error('Product not found or no reviews available');
-      }
-      logger.info('No reviews found, but using available product context for answer');
+  }
     }
 
-    // Get product info
-    const productInfo = kiyohAPI.getProductInfo(kiyohData, pCode);
+// Fetch product reviews AND company (shop) reviews in parallel
+const [kiyohData, companyData] = await Promise.all([
+  kiyohAPI.getProductReviews(locationId, apiToken, {
+    productCode: pCode,
+    productName: pName
+  }),
+  kiyohAPI.getCompanyReviews(locationId, apiToken)
+]);
 
-    // Build Gemini prompt
-    const { systemInstruction, prompt } = buildQAPrompt(
-      {
-        productName: pName || productInfo.productName,
-        gtin: productInfo.gtin || pCode,
-        averageRating: kiyohData.averageRating,
-        reviewCount: kiyohData.reviewCount
-      },
-      kiyohData.reviews || [],
+if (!kiyohData.reviews || kiyohData.reviews.length === 0) {
+  // If no reviews but we have product context (any specs, title, or description), we can still proceed
+  if (!productContext || Object.keys(productContext).length === 0) {
+    // Only throw if we truly have nothing
+    throw new Error('Product not found or no reviews available');
+  }
+  logger.info('No reviews found, but using available product context for answer');
+}
+
+// Get product info
+const productInfo = kiyohAPI.getProductInfo(kiyohData, pCode);
+
+// Build Gemini prompt
+const { systemInstruction, prompt } = buildQAPrompt(
+  {
+    productName: pName || productInfo.productName,
+    gtin: productInfo.gtin || pCode,
+    averageRating: kiyohData.averageRating,
+    reviewCount: kiyohData.reviewCount, // Product specific count
+    shopRating: companyData.averageRating,
+    shopReviewCount: companyData.reviewCount,
+    recommendationPercentage: companyData.recommendationPercentage
+  },
+  kiyohData.reviews || [],
+  question,
+  language,
+  productContext
+);
+
+logger.info(`🤖 Sending to Gemini AI:`, {
+  questionLength: question.length,
+  reviewCount: (kiyohData.reviews || []).length,
+  shopReviewCount: companyData.reviewCount || 0,
+  hasProductContext: !!productContext,
+  promptLength: prompt.length
+});
+
+// Generate answer with Gemini
+const { answer, confidence, tokensUsed } = await geminiService.generateAnswer(
+  systemInstruction,
+  prompt
+);
+
+logger.info(`✅ Gemini Response:`, {
+  answerLength: answer.length,
+  confidence,
+  tokensUsed
+});
+
+// Extract relevant review snippets
+const relevantReviews = extractRelevantReviews(kiyohData.reviews || [], question, 3);
+
+// Prepare response
+const responseData = {
+  question,
+  answer,
+  confidence,
+  product: {
+    name: pName || productInfo.productName,
+    gtin: productInfo.gtin || pCode,
+    rating: kiyohData.averageRating,
+    reviewCount: kiyohData.reviewCount,
+    imageUrl: productInfo.imageUrl
+  },
+  shop: {
+    rating: companyData.averageRating,
+    reviewCount: companyData.reviewCount,
+    recommendationPercentage: companyData.recommendationPercentage
+  },
+  relevantReviews,
+  metadata: {
+    answeredAt: new Date().toISOString(),
+    cached: false,
+    tokensUsed,
+    responseTime: Date.now() - startTime
+  }
+};
+
+// Cache the answer if we have a stable code
+if (pCode) {
+  await cacheService.cacheQA(pCode, question, responseData);
+}
+
+// Save to database (non-blocking)
+const questionHash = crypto.createHash('md5')
+  .update(question.toLowerCase().trim())
+  .digest('hex');
+
+if (pCode) {
+  try {
+    await QAPair.create({
+      locationId,
+      productCode: pCode,
       question,
-      language,
-      productContext
-    );
-
-    logger.info(`🤖 Sending to Gemini AI:`, {
-      questionLength: question.length,
-      reviewCount: (kiyohData.reviews || []).length,
-      hasProductContext: !!productContext,
-      promptLength: prompt.length
-    });
-
-    // Generate answer with Gemini
-    const { answer, confidence, tokensUsed } = await geminiService.generateAnswer(
-      systemInstruction,
-      prompt
-    );
-
-    logger.info(`✅ Gemini Response:`, {
-      answerLength: answer.length,
-      confidence,
-      tokensUsed
-    });
-
-    // Extract relevant review snippets
-    const relevantReviews = extractRelevantReviews(kiyohData.reviews || [], question, 3);
-
-    // Prepare response
-    const responseData = {
-      question,
+      questionHash,
       answer,
       confidence,
-      product: {
-        name: pName || productInfo.productName,
-        gtin: productInfo.gtin || pCode,
-        rating: kiyohData.averageRating,
-        reviewCount: kiyohData.reviewCount,
-        imageUrl: productInfo.imageUrl
-      },
-      relevantReviews,
-      metadata: {
-        answeredAt: new Date().toISOString(),
-        cached: false,
-        tokensUsed,
-        responseTime: Date.now() - startTime
-      }
-    };
-
-    // Cache the answer if we have a stable code
-    if (pCode) {
-      await cacheService.cacheQA(pCode, question, responseData);
-    }
-
-    // Save to database (non-blocking - don't crash if it fails)
-    const questionHash = crypto.createHash('md5')
-      .update(question.toLowerCase().trim())
-      .digest('hex');
-
-    // Only save if we have a product code, otherwise it's hard to retrieve
-    if (pCode) {
-      try {
-        await QAPair.create({
-          locationId,
-          productCode: pCode,
-          question,
-          questionHash,
-          answer,
-          confidence,
-          language,
-          tokensUsed
-        });
-      } catch (err) {
-        logger.warn('Failed to save Q&A pair (non-critical):', err.message);
-      }
-    }
-
-    // Increment question counter
-    if (pCode) {
-      await cacheService.incrementQuestionCount(locationId, pCode, question);
-    }
-
-    // Log analytics (non-blocking)
-    try {
-      await Analytics.log({
-        locationId,
-        productCode: pCode || 'unknown',
-        question,
-        answerProvided: true,
-        cached: false,
-        responseTimeMs: Date.now() - startTime,
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent')
-      });
-    } catch (err) {
-      logger.warn('Failed to log analytics (non-critical):', err.message);
-    }
-
-    res.json({
-      success: true,
-      data: responseData
+      language,
+      tokensUsed
     });
+  } catch (err) {
+    logger.warn('Failed to save Q&A pair (non-critical):', err.message);
+  }
+}
+
+// Increment question counter
+if (pCode) {
+  await cacheService.incrementQuestionCount(locationId, pCode, question);
+}
+
+// Log analytics
+try {
+  await Analytics.log({
+    locationId,
+    productCode: pCode || 'unknown',
+    question,
+    answerProvided: true,
+    cached: false,
+    responseTimeMs: Date.now() - startTime,
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent')
+  });
+} catch (err) {
+  logger.warn('Failed to log analytics (non-critical):', err.message);
+}
+
+res.json({
+  success: true,
+  data: responseData
+});
 
   } catch (err) {
-    error = err.message;
+  error = err.message;
 
-    // Log analytics even on error
-    await Analytics.log({
-      locationId,
-      productCode,
-      question,
-      answerProvided: false,
-      cached: false,
-      responseTimeMs: Date.now() - startTime,
-      error: err.message,
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent')
-    });
+  // Log analytics even on error
+  await Analytics.log({
+    locationId,
+    productCode,
+    question,
+    answerProvided: false,
+    cached: false,
+    responseTimeMs: Date.now() - startTime,
+    error: err.message,
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent')
+  });
 
-    next(err);
-  }
+  next(err);
+}
 }
 
 /**

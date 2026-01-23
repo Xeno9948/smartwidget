@@ -169,11 +169,14 @@ class KiyohAIWidget extends HTMLElement {
       );
 
       if (response.success) {
+        // Extract shop data from new structure: response.data.shop.rating
+        const shopData = response.data.shop || {};
+
         this.setState({
           loading: false,
           answer: response.data,
-          shopRating: response.data.product.rating,
-          shopReviewCount: response.data.product.reviewCount
+          shopRating: shopData.rating || response.data.product?.rating || null,
+          shopReviewCount: shopData.reviewCount || response.data.product?.reviewCount || null
         });
 
         // Scroll to answer

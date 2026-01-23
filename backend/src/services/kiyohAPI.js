@@ -62,6 +62,52 @@ class KiyohAPI {
     }
   }
 
+  /**
+   * Fetch company (shop) reviews from Kiyoh
+   * @param {string} locationId - Customer's Kiyoh location ID
+   * @param {string} apiToken - Kiyoh Publication API token
+   */
+  async getCompanyReviews(locationId, apiToken) {
+    try {
+      // Endpoint Assumption: Same structure but for company reviews (no productCode)
+      // GET https://<baseurl>/v1/publication/review/external?locationId=[id]
+      const url = `${this.baseUrl}/v1/publication/review/external?locationId=${locationId}`;
+
+      logger.info(`Fetching Kiyoh company reviews from: ${url}`);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Publication-Api-Token': apiToken
+        }
+      });
+
+      if (!response.ok) {
+        // Log the full error text for debugging
+        const text = await response.text();
+        // If 404, it might just mean no reviews, but usually 200 with empty list is expected
+        logger.warn(`Kiyoh company reviews error: ${response.status} ${response.statusText}`);
+        return this.getEmptyResult();
+      }
+
+      const data = await response.json();
+      const reviews = data.reviews || [];
+      logger.info(`Kiyoh returned ${reviews.length} company reviews`);
+
+      return {
+        reviews: this.mapReviews(reviews),
+        reviewCount: data.numberReviews || 0,
+        averageRating: data.averageRating || 0,
+        recommendationPercentage: data.recommendationPercentage || 0
+      };
+
+    } catch (error) {
+      logger.error(`Error fetching Kiyoh company reviews: ${error.message}`);
+      return this.getEmptyResult();
+    }
+  }
+
   mapReviews(rawReviews) {
     return rawReviews.map(r => ({
       rating: r.rating,

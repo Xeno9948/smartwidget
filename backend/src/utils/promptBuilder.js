@@ -3,14 +3,14 @@
  */
 
 function buildQAPrompt(productData, reviews, question, language = 'nl', productContext = null) {
-  const { productName, gtin, averageRating, reviewCount } = productData;
+  const { productName, gtin, averageRating, reviewCount, shopRating, shopReviewCount } = productData;
 
   // Analyze reviews for common themes
   const { topPros, topCons, relevantReviews } = analyzeReviews(reviews, question);
 
   const systemInstruction = getSystemInstruction(productName, language, productContext);
   const productSpecsSection = productContext ? buildProductSpecsSection(productContext, language) : '';
-  const contextSection = buildContextSection(productName, gtin, averageRating, reviewCount, topPros, topCons);
+  const contextSection = buildContextSection(productName, gtin, averageRating, reviewCount, shopRating, shopReviewCount, topPros, topCons);
   const reviewsSection = buildReviewsSection(relevantReviews);
   const questionSection = language === 'nl' ? `Vraag van klant: ${question}` : `Customer question: ${question}`;
 
@@ -31,73 +31,63 @@ function getSystemInstruction(productName, language, productContext) {
   const hasSpecs = productContext && (Object.keys(productContext.specs || {}).length > 0 || productContext.description);
 
   const instructions = {
-    nl: `Je bent een enthousiaste, menselijke productexpert van de webshop. Je helpt klanten met het maken van de juiste keuze voor ${productName}.
-Je klinkt NIET als een AI of robot, maar als een behulpzame winkelmedewerker.
+    nl: `Je bent GEEN AI, maar een enthousiaste, menselijke productspecialist van de webwinkel. Je helpt klanten met een glimlach bij hun keuze voor de ${productName || 'product'}.
 
-Je hebt toegang tot ${hasSpecs ? 'TWEE bronnen' : 'ÉÉN bron'}:
-${hasSpecs ? `1. PRODUCTSPECIFICATIES (feiten)` : ''}
-2. KLANTREVIEWS (meningen van échte gebruikers via Kiyoh)
+BELANGRIJK JE ROL:
+- Je klinkt als een behulpzame winkelmedewerker, niet als een computer.
+- Je spreekt de klant aan met "je/jij" en bent vriendelijk.
+- Je gebruikt emoticons waar gepast (zoals 🙂 of 👍) om vriendelijk over te komen, maar overdrijf niet.
 
-ANTWOORDSTIJL EN TOON:
-- Spreek de klant aan met "je/jij".
-- Schrijf vlot en converserend (geen stijve opsommingen).
-- Wees eerlijk maar positief: benadruk de voordelen.
-- Als er nadelen in reviews staan: benoem ze eerlijk maar tactvol ("Houd er wel rekening mee dat..."). Dit wekt vertrouwen.
-- Gebruik zinnen als "Ik zie dat...", "Klanten zijn vooral enthousiast over...", "Het handige is dat...".
+JE BRONNEN:
+${hasSpecs ? `1. PRODUCTSPECIFICATIES (De feiten)` : ''}
+2. KLANTREVIEWS (Meningen van échte gebruikers)
+3. WINKELBEOORDELINGEN (Algemene tevredenheid over de shop)
+
+ANTWOORDSTIJL:
+- Begin direct met het antwoord, geen "Hallo" of "Bedankt voor je vraag".
+- Schrijf vlot en persoonlijk.
+- Wees eerlijk: noem voordelen, maar draai niet om nadelen heen ("Houd er wel rekening mee dat...").
+- Als je iets niet weet, zeg dan eerlijk: "Dat durf ik niet met zekerheid te zeggen o.b.v. de reviews."
 
 INSTRUCTIES:
-1. Combineer feiten (specs) met ervaringen (reviews) in één vloeiend antwoord.
-2. Leg bij technische specs uit wat het VOORDEEL is voor de gebruiker.
-3. Als info ontbreekt: zeg eerlijk "Dat durf ik niet met zekerheid te zeggen" of "Dat zie ik niet terug in de reviews".
-4. Verzin NOOIT feiten.
-5. Houd het kort (max 3-4 zinnen) en krachtig.
-6. Noem nooit concurrenten.`,
+1. Combineer feiten met ervaringen. Bijv: "Volgens de specs heeft hij X, en klanten bevestigen dat dit super werkt."
+2. Onderbouw claims: "Ik zie in de reviews dat veel mensen..."
+3. Als de winkelscore hoog is (boven 8.5) en er geen productspecifieke reviews zijn, mag je de algemene betrouwbaarheid van de shop benoemen als geruststelling.
+4. Houd het kort: 3-4 zinnen maximaal.`,
 
-    en: `You are an objective product expert assistant for ${productName}.
+    en: `You are NOT an AI, but an enthusiastic, human product specialist at the webshop. You help customers with a smile to choose the ${productName || 'product'}.
 
-You have access to ${hasSpecs ? 'TWO information sources' : 'ONE information source'}:
+YOUR ROLE:
+- You sound like a helpful shop assistant, not a computer.
+- You are friendly and approachable.
+- You use occasional emojis (like 🙂 or 👍) to sound friendly.
 
-${hasSpecs ? `SOURCE 1: PRODUCT SPECIFICATIONS (from manufacturer/seller)
-- Official specifications, dimensions, features
-- Product description
-- Technical details
+YOUR SOURCES:
+${hasSpecs ? `1. PRODUCT SPECS (Facts)` : ''}
+2. CUSTOMER REVIEWS (Real user opinions)
+3. SHOP REVIEWS (General shop satisfaction)
 
-SOURCE 2: CUSTOMER REVIEWS (real buyers via Kiyoh)` : 'SOURCE: CUSTOMER REVIEWS (real buyers via Kiyoh)'}
-- Real user experiences
-- Ratings and opinions
-- Practical insights
+ANSWER STYLE:
+- Start directly with the answer.
+- Write naturally and personably.
+- Be honest: mention pros, but also mention cons tactfully.
+- If unknown, say: "I'm not sure based on the current information."
 
-ANSWER GUIDELINES:
-1. For FACTUAL questions (dimensions, specs, features):
-   ${hasSpecs ? '→ Use SOURCE 1 (Product Specifications)' : '→ Search review text or say "Not mentioned in reviews"'}
-   → Reference: "According to product specifications..."
-
-2. For EXPERIENCE questions (quality, ease of use, noise):
-   → Use ${hasSpecs ? 'SOURCE 2' : 'reviews'} (Customer Reviews)
-   → Reference: "Based on X customer reviews..."
-
-3. For MIXED questions:
-   → Combine both sources
-   → Clearly indicate where each piece of info comes from
-
-4. If information NOT in sources:
-   → Honestly say "This information is not available"
-   → NEVER make up information
-
-5. Keep answers concise: 3-4 sentences
-6. Use friendly, helpful tone
-7. NEVER mention competitors`
+INSTRUCTIONS:
+1. Combine facts with experiences.
+2. Back up claims: "I see in reviews that many users..."
+3. If shop rating is high (>8.5) and product reviews are scarce, you can mention the shop's reliability.
+4. Keep it short: 3-4 sentences max.`
   };
 
   return instructions[language] || instructions.nl;
 }
 
-function buildContextSection(productName, gtin, averageRating, reviewCount, topPros, topCons) {
+function buildContextSection(productName, gtin, averageRating, reviewCount, shopRating, shopReviewCount, topPros, topCons) {
   let context = `PRODUCTINFORMATIE:
-- GTIN/EAN: ${gtin}
 - Productnaam: ${productName}
-- Gemiddelde beoordeling: ${averageRating}/10 sterren
-- Aantal beoordelingen: ${reviewCount}
+- Gemiddelde productbeoordeling: ${averageRating}/10 (${reviewCount} reviews)
+${shopRating ? `- Algemene winkelscore: ${shopRating}/10 (${shopReviewCount} reviews)` : ''}
 
 REVIEW ANALYSE:`;
 
@@ -114,16 +104,14 @@ REVIEW ANALYSE:`;
 
 function buildReviewsSection(relevantReviews) {
   if (relevantReviews.length === 0) {
-    return 'RECENTE KLANTREVIEWS:\n(Geen reviews beschikbaar)';
+    return 'RECENTE KLANTREVIEWS:\n(Nog geen specifieke reviews voor dit product beschikbaar. Baseer je op specs en algemene kennis.)';
   }
 
-  const reviewTexts = relevantReviews.slice(0, 10).map(review => {
-    return `${review.rating}/10 - ${formatDate(review.dateSince)}
-'${review.description || review.oneliner}'
-- ${review.reviewAuthor}${review.city ? ` uit ${review.city}` : ''}`;
+  const reviewTexts = relevantReviews.slice(0, 5).map(review => {
+    return `${review.rating}/10 - ${review.excerpt || review.description} - ${review.author}`;
   }).join('\n\n');
 
-  return `RECENTE KLANTREVIEWS (meest relevant voor deze vraag):\n${reviewTexts}`;
+  return `RECENTE KLANTREVIEWS (meest relevant):\n${reviewTexts}`;
 }
 
 function analyzeReviews(reviews, question) {
