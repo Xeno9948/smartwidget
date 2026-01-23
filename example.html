@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xeno Vision S1 | 16K Liquid Glass TV</title>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": "Xeno Vision S1 Liquid Glass Edition",
+      "description": "75-inch 16K Smart OLED TV with Neural-Link AI Processor and Liquid Glass technology.",
+      "sku": "120000G",
+      "productID": "0198",
+      "brand": {
+        "@type": "Brand",
+        "name": "Xeno"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://xenostore.com/products/vision-s1",
+        "priceCurrency": "USD",
+        "price": "4499.00",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition"
+      }
+    }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://kiyoh-ai-backend-production.up.railway.app/widget/widget.min.js"></script>
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #00f2fe;
+            --bg: #0a0a0b;
+            --text-main: #ffffff;
+            --text-dim: #a0a0a5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            line-height: 1.5;
+            padding-top: 60px;
+        }
+
+        .liquid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 5% 5%, #16222a 0%, transparent 25%),
+                radial-gradient(circle at 95% 95%, #1a1a2e 0%, transparent 25%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 5%;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 60px;
+        }
+
+        /* Product Image & Trust Section */
+        .product-visuals {
+            position: sticky;
+            top: 60px;
+            height: fit-content;
+        }
+
+        .main-stage {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .main-stage i {
+            font-size: 10rem;
+            color: var(--accent);
+            filter: drop-shadow(0 0 30px rgba(0, 242, 254, 0.2));
+        }
+
+        .widget-frame {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Product Details & Purchase Options */
+        .info-panel h1 {
+            font-size: 2.4rem;
+            margin-bottom: 4px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .meta-tags {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .brand-tag {
+            font-size: 0.85rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .price-section {
+            margin: 24px 0;
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .current-price {
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+
+        .original-price {
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            text-decoration: line-through;
+        }
+
+        .buy-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stock-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #00ff88;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .cta-btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 700;
+            text-decoration: none;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+        }
+
+        .cta-btn:hover {
+            opacity: 0.85;
+            transform: scale(0.99);
+        }
+
+        /* Tech Specifications */
+        .specs-table {
+            margin-top: 40px;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 30px;
+        }
+
+        .spec-entry {
+            display: flex;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .spec-label {
+            width: 140px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .spec-data {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #eee;
+        }
+
+        @media (max-width: 968px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .product-visuals {
+                position: static;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="liquid-bg"></div>
+
+    <div class="container">
+        <div class="product-visuals">
+            <div class="main-stage">
+                <i class="fa-solid fa-tv"></i>
+            </div>
+
+            <div class="widget-frame">
+                <kiyoh-ai-widget data-location-id="1080586"
+                    data-api-base-url="https://kiyoh-ai-backend-production.up.railway.app/api/v1">
+                </kiyoh-ai-widget>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <span class="brand-tag">Xeno Signature Series</span>
+            <h1>Vision S1 Liquid Glass Edition</h1>
+
+            <div class="meta-tags">
+                <span>ID: 0198</span>
+                <span>SKU: 120000G</span>
+            </div>
+
+            <div class="price-section">
+                <span class="current-price">$4,499.00</span>
+                <span class="original-price">$5,299.00</span>
+            </div>
+
+            <div class="buy-card">
+                <div class="stock-indicator">
+                    <i class="fa-solid fa-circle-check"></i>
+                    Ships within 24 hours
+                </div>
+
+                <a href="#" class="cta-btn btn-primary">Add to Bag</a>
+                <a href="#" class="cta-btn btn-secondary">Direct Checkout</a>
+
+                <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 20px; text-align: center;">
+                    <i class="fa-solid fa-truck-fast"></i> Free White-Glove Installation Included
+                </p>
+            </div>
+
+            <div class="tech-specs">
+                <h3 style="font-size: 1.1rem; margin-bottom: 15px;">Technical Mastery</h3>
+                <p style="color: var(--text-dim); font-size: 0.95rem; margin-bottom: 25px;">
+                    Carved from a single substrate of liquid-crystalline glass, the S1 provides 16K resolution with zero
+                    light bleed and a 99% screen-to-body ratio.
+                </p>
+
+                <div class="specs-table">
+                    <div class="spec-entry">
+                        <div class="spec-label">MODEL ID</div>
+                        <div class="spec-data">0198</div>
+                    </div>
+                    <div class="spec-entry">
+                        <div class="spec-label">SKU</div>
+                        <div class="spec-data">120000G</div>
+                    </div>
+                    <div class="spec-entry">
+                        <div class="spec-label">DISPLAY</div>
+                        <div class="spec-data">75" 16K Liquid OLED</div>
+                    </div>
+                    <div class="spec-entry">
+                        <div class="spec-label">BRIGHTNESS</div>
+                        <div class="spec-data">4,500 Nits (Peak)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer style="padding: 80px 5% 40px; text-align: center; color: #333; font-size: 0.75rem; letter-spacing: 1px;">
+        &copy; 2026 XENO TECHNOLOGIES. BUILT FOR THE NEXT DIMENSION.
+    </footer>
+
+</body>
+
+</html>
