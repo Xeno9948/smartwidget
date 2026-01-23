@@ -65,6 +65,21 @@ class APIClient {
 
     return await response.json();
   }
+
+  /**
+   * Get shop rating (for initial display)
+   */
+  async getShopRating(locationId) {
+    const response = await fetch(
+      `${this.baseUrl}/shop/${locationId}/rating`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  }
 }
 
 export default APIClient;

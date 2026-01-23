@@ -95,14 +95,14 @@ class KiyohAIWidget extends HTMLElement {
 
         if (this.state.productIdentifier) {
           console.log('[KiyohAIWidget] Detected:', this.state.productIdentifier);
-          // Use GTIN if available, otherwise use identifier value
           if (this.state.productIdentifier.type === 'gtin') {
             this.state.productCode = this.state.productIdentifier.value;
           }
-        } else {
-          console.warn('[KiyohAIWidget] Could not detect product identifier');
         }
       }
+
+      // Load shop rating immediately (before any question)
+      await this.loadShopRating();
 
       // Load popular questions
       await this.loadPopularQuestions();
@@ -111,6 +111,21 @@ class KiyohAIWidget extends HTMLElement {
     } catch (error) {
       console.error('[KiyohAIWidget] Initialization error:', error);
       this.setState({ error: error.message });
+    }
+  }
+
+  async loadShopRating() {
+    try {
+      const response = await this.apiClient.getShopRating(this.state.locationId);
+      if (response.success && response.data) {
+        this.setState({
+          shopRating: response.data.rating,
+          shopReviewCount: response.data.reviewCount
+        });
+        console.log('[KiyohAIWidget] Shop rating loaded:', response.data.rating);
+      }
+    } catch (error) {
+      console.warn('[KiyohAIWidget] Could not load shop rating:', error);
     }
   }
 
@@ -231,94 +246,77 @@ class KiyohAIWidget extends HTMLElement {
       <style>${styles}</style>
       <div class="widget-container">
         
-        ${/* Shop Rating Header - NEW */ ''}
-        ${shopRating ? `
-          <div class="shop-header">
-             <div class="shop-rating-container">
-               <span class="shop-stars">${this.renderStars(shopRating)}</span>
-               <span class="shop-score">${shopRating}/10</span>
-               <span class="shop-reviews">(${shopReviewCount} reviews)</span>
-               <span class="kiyoh-check">✓</span>
-             </div>
-          </div>
-        ` : ''}
-
-        ${error ? `
-          <div class="error-message">
-            ⚠️ ${error}
-          </div>
-        ` : ''}
-
-        ${/* Product specific header specific to the Answer */ ''}
-        ${answer && answer.product && this.state.showProductInfo ? `
-          <div class="product-header">
-            ${answer.product.imageUrl ? `
-              <img src="${answer.product.imageUrl}" alt="${answer.product.name}" class="product-image">
-            ` : ''}
-            <div class="product-info">
-              <div class="product-name">${answer.product.name}</div>
+        <!-- Header Bar: Title left, Score right -->
+        <div class="header-bar">
+          <span class="widget-title">Vraag het aan klanten</span>
+          ${shopRating ? `
+            <div class="score-badge">
+              <span class="stars">${this.renderStars(shopRating)}</span>
+              <span class="score">${shopRating}/10</span>
+              <span class="count">(${shopReviewCount || 0})</span>
+              <span class="kiyoh-logo">✓</span>
             </div>
+          ` : ''}
+        </div>
+
+        ${error ? `<div class="error-message">⚠️ ${error}</div>` : ''}
+
+        <!-- Suggested Questions -->
+        ${!answer && !loading && popularQuestions.length > 0 ? `
+          <div class="suggestions">
+            ${popularQuestions.slice(0, 3).map((q, i) => `
+              <button type="button" class="suggestion-chip" data-index="${i}">
+                ${q.question.length > 35 ? q.question.substring(0, 35) + '...' : q.question}
+              </button>
+            `).join('')}
           </div>
         ` : ''}
 
+        <!-- Input Row: Input + Ask Button -->
         <form>
-          <div class="question-input-container">
-            <label class="input-label">Stel je vraag over dit product</label>
-            <textarea
+          <div class="input-row">
+            <input
+              type="text"
               class="question-input"
-              placeholder="Bijvoorbeeld: Hoe stil is dit apparaat?"
-              maxlength="500"
-              rows="3"
-            ></textarea>
-            <div class="char-counter">0/500</div>
+              placeholder="Stel je vraag over dit product..."
+              maxlength="200"
+              ${loading ? 'disabled' : ''}
+            />
+            <button type="submit" class="ask-button" ${loading ? 'disabled' : ''}>
+              ${loading ? '...' : 'Vraag'}
+            </button>
           </div>
-
-          <button type="submit" class="ask-button" ${loading ? 'disabled' : ''}>
-            ${loading ? 'Even geduld...' : 'Stel vraag'}
-          </button>
         </form>
 
+        <!-- Loading -->
         ${loading ? `
-          <div class="loading">
+          <div class="loading-container">
             <div class="spinner"></div>
-            <span>AI analyseert reviews...</span>
+            <span>Analyseren...</span>
           </div>
         ` : ''}
 
+        <!-- Answer -->
         ${answer ? `
-          <div class="answer-container">
+          <div class="answer-section">
             <div class="answer-header">
-              <div class="ai-icon">AI</div>
-              <span class="answer-title">Antwoord gebaseerd op reviews</span>
-              <span class="confidence-badge confidence-${answer.confidence}">${answer.confidence}</span>
+              <span class="ai-badge">AI</span>
+              <span class="answer-label">Gebaseerd op ${answer.reviewsUsed || 'klant'} reviews</span>
             </div>
             <div class="answer-text">${answer.answer}</div>
 
             ${answer.relevantReviews && answer.relevantReviews.length > 0 ? `
-              <div class="review-snippets">
-                <div class="snippets-title">Relevante klantreviews</div>
-                ${answer.relevantReviews.map(review => `
-                  <div class="review-snippet">
-                    <div class="review-rating">${this.renderStars(review.rating)} ${review.rating}/10</div>
-                    <div class="review-text">"${review.excerpt}"</div>
-                    <div class="review-author">— ${review.author}</div>
+              <div class="snippets">
+                <div class="snippets-title">Klantreviews</div>
+                ${answer.relevantReviews.slice(0, 2).map(review => `
+                  <div class="snippet">
+                    <span class="snippet-rating">${this.renderStars(review.rating)}</span>
+                    <span class="snippet-text">"${review.excerpt}"</span>
+                    <div class="snippet-author">— ${review.author}</div>
                   </div>
                 `).join('')}
               </div>
             ` : ''}
-          </div>
-        ` : ''}
-
-        ${!answer && !loading && popularQuestions.length > 0 ? `
-          <div class="popular-questions">
-            <div class="popular-title">💡 Veelgestelde vragen</div>
-            <div class="question-buttons">
-              ${popularQuestions.map((q, i) => `
-                <button type="button" class="question-button" data-question="${q.question}" data-index="${i}">
-                  ${q.question}
-                </button>
-              `).join('')}
-            </div>
           </div>
         ` : ''}
       </div>

@@ -1,270 +1,237 @@
 /**
- * Kiyoh Wrapper UI Styles
- * Refined, compact, and brand-aligned
+ * Kiyoh Widget Styles - Compact Bar Design
  */
 
 export const styles = `
   :host {
-    --primary-color: #FF6600;
-    --primary-gradient: linear-gradient(135deg, #FF6600 0%, #FF8533 100%);
-    --bg-color: #ffffff;
-    --text-primary: #1a1a1a;
-    --text-secondary: #666;
-    --border-radius: 16px;
-    --transition: all 0.2s ease;
+    --kiyoh-orange: #FF6600;
+    --kiyoh-orange-light: #fff7ed;
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --radius: 12px;
 
     display: block;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 14px;
-    line-height: 1.5;
-    color: var(--text-primary);
+    line-height: 1.4;
+    color: var(--text);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   .widget-container {
-    background: var(--bg-color);
-    border: 1px solid #e5e7eb;
-    border-radius: var(--border-radius);
-    padding: 1rem;
-    max-width: 420px; /* Reduced from 560px */
-    margin: 0 auto;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    max-width: 480px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
 
-  /* Shop Header */
-  .shop-header {
-    background: #fff; /* Clean white */
-    padding-bottom: 0.75rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #f3f4f6;
+  /* Header Bar: Score on right, title on left */
+  .header-bar {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
   }
-  
-  .shop-rating-container {
+
+  .widget-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+
+  .score-badge {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.9rem;
-    background: #fff7ed; /* Light orange tint */
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
+    background: var(--kiyoh-orange-light);
+    padding: 4px 10px;
+    border-radius: 16px;
     border: 1px solid #ffedd5;
+    font-size: 0.85rem;
   }
-  
-  .shop-stars { color: #FF6600; letter-spacing: 1px; }
-  .shop-score { font-weight: 700; color: #1a1a1a; }
-  .shop-reviews { color: #6b7280; font-size: 0.8rem; }
-  .kiyoh-check { color: #FF6600; font-weight: bold; }
 
-  /* Product Header */
-  .product-header {
+  .score-badge .stars { color: var(--kiyoh-orange); }
+  .score-badge .score { font-weight: 700; }
+  .score-badge .count { color: var(--text-muted); font-size: 0.75rem; }
+  .score-badge .kiyoh-logo { color: var(--kiyoh-orange); font-weight: bold; margin-left: 2px; }
+
+  /* Suggested Questions */
+  .suggestions {
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-    padding: 0.75rem;
-    background: #f9fafb;
-    border-radius: 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
   }
 
-  .product-image {
-    width: 50px;
-    height: 50px;
-    border-radius: 8px;
-    object-fit: cover;
-    border: 1px solid #e5e7eb;
+  .suggestion-chip {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #fff;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
   }
 
-  .product-name {
-    font-weight: 600;
-    font-size: 0.95rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  .suggestion-chip:hover {
+    border-color: var(--kiyoh-orange);
+    color: var(--kiyoh-orange);
+    background: var(--kiyoh-orange-light);
   }
 
-  /* Input Section */
-  .question-input-container { margin-bottom: 1rem; }
-  
-  .input-label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
+  /* Input Row: Input + Ask Button inline */
+  .input-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
   }
 
   .question-input {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 10px;
-    font-size: 0.95rem;
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
     font-family: inherit;
-    transition: var(--transition);
     resize: none;
-    height: 80px;
+    transition: border-color 0.15s;
   }
 
   .question-input:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+    border-color: var(--kiyoh-orange);
   }
 
-  .char-counter {
-    text-align: right;
-    font-size: 0.75rem;
+  .question-input::placeholder {
     color: #9ca3af;
-    margin-top: 0.25rem;
   }
 
   .ask-button {
-    width: 100%;
-    padding: 0.75rem;
+    padding: 10px 20px;
     border: none;
-    border-radius: 10px;
-    background: var(--primary-color);
+    border-radius: 8px;
+    background: var(--kiyoh-orange);
     color: white;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    transition: var(--transition);
+    transition: all 0.15s;
+    white-space: nowrap;
   }
 
   .ask-button:hover {
     background: #e65c00;
-    transform: translateY(-1px);
   }
 
-  .ask-button:active { transform: translateY(0); }
-  .ask-button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .ask-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 
-  .loading {
+  /* Loading */
+  .loading-container {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    padding: 1.5rem;
-    gap: 0.5rem;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    gap: 8px;
+    padding: 12px 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
   }
 
   .spinner {
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
     border: 2px solid #ffedd5;
-    border-top-color: var(--primary-color);
+    border-top-color: var(--kiyoh-orange);
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: spin 0.7s linear infinite;
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* Answer Section */
-  .answer-container {
-    margin-top: 1.5rem;
-    background: #fff;
-    border-top: 1px solid #f3f4f6;
-    padding-top: 1.5rem;
-    animation: slideIn 0.3s ease-out;
+  .answer-section {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    animation: fadeIn 0.3s ease;
   }
 
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px); }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
   .answer-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
-  .ai-icon {
-    width: 24px;
-    height: 24px;
-    background: var(--primary-color);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .ai-badge {
+    background: var(--kiyoh-orange);
     color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
     font-size: 0.7rem;
-    font-weight: bold;
+    font-weight: 600;
   }
 
-  .answer-title { font-weight: 600; font-size: 0.95rem; }
+  .answer-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
 
   .answer-text {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     line-height: 1.6;
-    color: #374151;
+    color: var(--text);
   }
 
-  .review-snippets {
-    margin-top: 1.5rem;
+  /* Review Snippets */
+  .snippets {
+    margin-top: 12px;
+    padding-top: 10px;
     border-top: 1px dotted #e5e7eb;
-    padding-top: 1rem;
   }
 
   .snippets-title {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #9ca3af;
-    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
     text-transform: uppercase;
+    margin-bottom: 8px;
   }
 
-  .review-snippet {
+  .snippet {
     background: #f9fafb;
-    border-radius: 8px;
-    padding: 0.75rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.85rem;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
   }
 
-  .review-rating { color: #f59e0b; font-weight: 600; margin-bottom: 0.25rem; }
-  .review-text { font-style: italic; color: #4b5563; margin-bottom: 0.25rem; }
-  .review-author { text-align: right; color: #9ca3af; font-size: 0.75rem; }
+  .snippet-rating { color: #f59e0b; font-weight: 600; }
+  .snippet-text { color: #4b5563; font-style: italic; }
+  .snippet-author { color: #9ca3af; font-size: 0.75rem; text-align: right; }
 
+  /* Error */
   .error-message {
-    margin-top: 1rem;
-    padding: 0.75rem;
     background: #fef2f2;
     color: #dc2626;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    text-align: center;
-  }
-
-  /* Popular Questions */
-  .popular-questions { margin-top: 1.5rem; }
-  .popular-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem; }
-  
-  .question-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .question-button {
-    padding: 0.4rem 0.8rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 20px;
-    background: #fff;
-    color: var(--text-secondary);
+    padding: 8px 12px;
+    border-radius: 6px;
     font-size: 0.85rem;
-    cursor: pointer;
-    transition: var(--transition);
+    margin-bottom: 10px;
   }
 
-  .question-button:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-    background: #fff7ed;
-  }
+  /* Hidden */
+  .hidden { display: none; }
 `;

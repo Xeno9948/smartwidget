@@ -10,6 +10,7 @@ const { healthCheck } = require('./controllers/healthController');
 const qaRoutes = require('./routes/qa');
 const adminRoutes = require('./routes/admin');
 const analyticsRoutes = require('./routes/analytics');
+const shopRoutes = require('./routes/shop');
 const logger = require('./utils/logger');
 
 const app = express();
@@ -66,6 +67,7 @@ app.get('/health', healthCheck);
 // API routes
 app.use('/api/v1/qa', qaRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/shop', shopRoutes);
 app.use('/admin', adminRoutes); // Admin API for customer management
 
 // Serve widget files statically
