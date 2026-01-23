@@ -201,6 +201,13 @@ function buildProductSpecsSection(productContext, language = 'nl') {
     sections.push(`${descTitle}: ${description.slice(0, 300)}`); // Limit to 300 chars
   }
 
+  // Price
+  if (productContext.price) {
+    const priceTitle = language === 'nl' ? 'Prijs' : 'Price';
+    const currency = productContext.currency || 'EUR';
+    sections.push(`${priceTitle}: ${productContext.price} ${currency}`);
+  }
+
   // Specifications
   if (specs && Object.keys(specs).length > 0) {
     const specsTitle = language === 'nl' ? 'Technische specificaties' : 'Technical specifications';

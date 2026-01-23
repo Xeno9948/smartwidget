@@ -304,7 +304,11 @@ function extractRelevantReviews(reviews, question, limit = 3) {
   const questionWords = question.toLowerCase().split(/\s+/).filter(w => w.length > 3);
 
   const scored = reviews.map(review => {
-    const text = `${review.oneliner} ${review.description}`.toLowerCase();
+    // Check both mapped (text) and raw (description) properties to be safe
+    const textContent = review.text || review.description || '';
+    const titleContent = review.title || review.oneliner || '';
+
+    const text = `${titleContent} ${textContent}`.toLowerCase();
     let score = 0;
 
     questionWords.forEach(word => {
@@ -312,13 +316,16 @@ function extractRelevantReviews(reviews, question, limit = 3) {
     });
 
     // Boost reviews with descriptions
-    if (review.description && review.description.length > 50) score += 1;
+    if (textContent.length > 50) score += 1;
 
     // Boost recent reviews
-    const daysSince = (Date.now() - new Date(review.dateSince)) / (1000 * 60 * 60 * 24);
-    if (daysSince < 30) score += 1;
+    const reviewDate = review.date || review.dateSince;
+    if (reviewDate) {
+      const daysSince = (Date.now() - new Date(reviewDate)) / (1000 * 60 * 60 * 24);
+      if (daysSince < 30) score += 1;
+    }
 
-    return { ...review, score };
+    return { ...review, score, text: textContent, title: titleContent };
   });
 
   return scored
@@ -326,9 +333,9 @@ function extractRelevantReviews(reviews, question, limit = 3) {
     .slice(0, limit)
     .map(review => ({
       rating: review.rating,
-      excerpt: review.description || review.oneliner,
-      author: review.reviewAuthor,
-      date: review.dateSince
+      excerpt: review.text || review.description || '', // Use mapped text
+      author: review.author || review.reviewAuthor || 'Klant', // Use mapped author
+      date: review.date || review.dateSince
     }));
 }
 
