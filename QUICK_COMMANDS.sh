@@ -26,7 +26,9 @@ railway add --database redis
 
 echo ""
 echo "⚙️ Step 6: Set Environment Variables"
-railway variables set GEMINI_API_KEY=AIzaSyCloKjmE8pxzKmzfJD-roiJrTADRyzHt7U
+echo "⚠️  Please enter your NEW Gemini API key (get from https://makersuite.google.com/app/apikey)"
+read -p "Gemini API Key: " GEMINI_KEY
+railway variables set GEMINI_API_KEY=$GEMINI_KEY
 railway variables set NODE_ENV=production
 railway variables set PORT=3000
 railway variables set ALLOWED_ORIGINS="*"

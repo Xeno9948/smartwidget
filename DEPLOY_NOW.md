@@ -56,8 +56,11 @@ railway add --database redis
 ### F. Set Your Gemini API Key
 
 ```bash
-railway variables set GEMINI_API_KEY=AIzaSyCloKjmE8pxzKmzfJD-roiJrTADRyzHt7U
+railway variables set GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
 ```
+
+**⚠️ IMPORTANT**: Replace `YOUR_GEMINI_API_KEY_HERE` with your actual Gemini API key.
+Get it from: https://makersuite.google.com/app/apikey
 
 ### G. Set Additional Variables
 
